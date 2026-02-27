@@ -296,7 +296,7 @@
           <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
           <select 
             v-model="selectedModel" 
-            class="mt-2 w-full bg-[#1f1f1f] border rounded-lg p-2 text-sm"
+            class="mt-2 w-full bg-[#1f1f1f] rounded-lg p-3 text-sm"
           >
             <option v-for="model in models" :key="model.id" :value="model.id">
               {{ model.name }}
@@ -308,7 +308,7 @@
         <div v-if="currentView === 'chat'" class="p-4 flex-1 overflow-hidden flex flex-col">
           <button 
             @click="toggleFileBrowser"
-            class="w-full flex items-center justify-between text-xs text-gray-500 uppercase tracking-wider mb-2"
+            class="w-full flex items-center justify-between text-xs text-gray-500 uppercase tracking-wider mb-2 p-3 bg-[#1f1f1f] rounded-lg"
           >
             <span><i class="bi bi-folder me-1"></i> Workspace 檔案</span>
             <i class="bi" :class="showFileBrowser ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
