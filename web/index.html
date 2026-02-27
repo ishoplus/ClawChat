@@ -164,9 +164,9 @@
     <div class="flex h-full">
       
       <!-- 側邊欄：Agent 選擇器 -->
-      <aside class="w-72 bg-[#161616] border-r border-[#2a2a2a] flex flex-col">
+      <aside class="w-72 bg-[#161616] border-r flex flex-col">
         <!-- Logo + 頁籤切換 -->
-        <div class="p-4 border-b border-[#2a2a2a]">
+        <div class="p-4 border-b">
           <div class="flex gap-2 mb-3">
             <button 
               @click="currentView = 'chat'"
@@ -206,7 +206,7 @@
           <div class="relative mt-2">
             <button 
               @click="showAgentDropdown = !showAgentDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] border border-[#333] rounded-lg p-3 flex items-center gap-3 transition-colors"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] border rounded-lg p-3 flex items-center gap-3 transition-colors"
             >
               <span class="text-2xl">{{ selectedAgent.identity.emoji }}</span>
               <div class="text-left flex-1">
@@ -217,7 +217,7 @@
             </button>
             
             <!-- Dropdown -->
-            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border border-[#333] rounded-lg shadow-xl z-50">
+            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border rounded-lg shadow-xl z-50">
               <button
                 v-for="agent in agents"
                 :key="agent.id"
@@ -237,12 +237,12 @@
         </div>
         
         <!-- Session 控制 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t border-[#2a2a2a]">
+        <div v-if="currentView === 'chat'" class="p-4 border-t">
           <label class="text-xs text-gray-500 uppercase tracking-wider">對話</label>
           <div class="relative mt-2">
             <button 
               @click="showSessionDropdown = !showSessionDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] border border-[#333] rounded-lg p-2 flex items-center gap-2 transition-colors text-sm"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] border rounded-lg p-2 flex items-center gap-2 transition-colors text-sm"
             >
               <i class="bi bi-chat-dots text-gray-400"></i>
               <span class="flex-1 text-left truncate">{{ currentSessionName }}</span>
@@ -250,8 +250,8 @@
             </button>
             
             <!-- Session Dropdown -->
-            <div v-if="showSessionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border border-[#333] rounded-lg shadow-xl z-50">
-              <div class="p-2 border-b border-[#333]">
+            <div v-if="showSessionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border rounded-lg shadow-xl z-50">
+              <div class="p-2 border-b">
                 <button
                   @click="createNewSession"
                   class="w-full p-2 text-sm text-blue-400 hover:bg-[#2a2a2a] rounded flex items-center gap-2"
@@ -279,11 +279,11 @@
         </div>
         
         <!-- 模型選擇 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t border-[#2a2a2a]">
+        <div v-if="currentView === 'chat'" class="p-4 border-t">
           <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
           <select 
             v-model="selectedModel" 
-            class="mt-2 w-full bg-[#1f1f1f] border border-[#333] rounded-lg p-2 text-sm"
+            class="mt-2 w-full bg-[#1f1f1f] border rounded-lg p-2 text-sm"
           >
             <option v-for="model in models" :key="model.id" :value="model.id">
               {{ model.name }}
@@ -292,7 +292,7 @@
         </div>
         
         <!-- 檔案瀏覽器 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t border-[#2a2a2a] flex-1 overflow-hidden flex flex-col">
+        <div v-if="currentView === 'chat'" class="p-4 border-t flex-1 overflow-hidden flex flex-col">
           <button 
             @click="toggleFileBrowser"
             class="w-full flex items-center justify-between text-xs text-gray-500 uppercase tracking-wider mb-2"
@@ -341,8 +341,8 @@
           
           <!-- 檔案預覽彈窗 -->
           <div v-if="filePreviewContent !== null" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" @click.self="filePreviewContent = null">
-            <div class="bg-[#1f1f1f] rounded-lg w-full max-w-3xl max-h-[80vh] flex flex-col border border-[#333]">
-              <div class="p-3 border-b border-[#333] flex items-center justify-between">
+            <div class="bg-[#1f1f1f] rounded-lg w-full max-w-3xl max-h-[80vh] flex flex-col border">
+              <div class="p-3 border-b flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <i class="bi bi-file-text"></i>
                   <span class="font-medium">{{ filePreviewPath }}</span>
@@ -366,7 +366,7 @@
         </div>
         
         <!-- 快捷操作 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t border-[#2a2a2a] mt-auto">
+        <div v-if="currentView === 'chat'" class="p-4 border-t mt-auto">
           <button 
             @click="clearChat"
             class="w-full p-2 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -386,20 +386,20 @@
             <!-- 狀態卡片 -->
             <div class="mb-6">
               <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">系統狀態</h3>
-              <div class="bg-[#1f1f1f] rounded-lg p-4 border border-[#333] space-y-3">
+              <div class="bg-[#1f1f1f] rounded-lg p-4 border space-y-3">
                 <div class="flex items-center gap-3">
                   <div class="w-3 h-3 rounded-full" :class="systemStatus === 'online' ? 'bg-green-500' : 'bg-red-500'"></div>
                   <span class="font-medium">Gateway {{ systemStatus }}</span>
                 </div>
                 
                 <!-- ngrok -->
-                <div v-if="ngrokUrl" class="pt-3 border-t border-[#333]">
+                <div v-if="ngrokUrl" class="pt-3 border-t">
                   <div class="text-xs text-gray-500 mb-2">公開網址</div>
                   <a :href="ngrokUrl" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm break-all">
                     {{ ngrokUrl }}
                   </a>
                 </div>
-                <div v-else class="pt-3 border-t border-[#333]">
+                <div v-else class="pt-3 border-t">
                   <button 
                     @click="startNgrok"
                     class="w-full py-2 bg-[#2563eb] hover:bg-[#1d4ed8] rounded-lg text-sm transition-colors"
@@ -418,7 +418,7 @@
                   v-for="agent in manageAgents" 
                   :key="agent.id"
                   @click="showAgentDetail(agent)"
-                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border border-[#333] flex items-center gap-3 transition-colors text-left"
+                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors text-left"
                 >
                   <span class="text-2xl">{{ agent.emoji }}</span>
                   <div class="flex-1">
@@ -438,7 +438,7 @@
                   v-for="(info, name) in manageChannels" 
                   :key="name"
                   @click="showChannelDetail(name, info)"
-                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border border-[#333] flex items-center gap-3 transition-colors text-left"
+                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors text-left"
                 >
                   <div class="w-10 h-10 bg-[#059669] rounded-lg flex items-center justify-center text-xl">📱</div>
                   <div class="flex-1">
@@ -459,7 +459,7 @@
             <!-- Gateway 配置 -->
             <div>
               <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Gateway</h3>
-              <div class="bg-[#1f1f1f] rounded-lg p-3 border border-[#333] text-sm">
+              <div class="bg-[#1f1f1f] rounded-lg p-3 border text-sm">
                 <div class="flex justify-between py-1">
                   <span class="text-gray-400">HTTP Port</span>
                   <span>{{ gatewayInfo.port }}</span>
@@ -485,13 +485,13 @@
             
             <!-- Agent 詳情 -->
             <div v-if="detailView.type === 'agent'" class="space-y-4">
-              <div class="bg-[#1f1f1f] rounded-lg p-6 border border-[#333] text-center">
+              <div class="bg-[#1f1f1f] rounded-lg p-6 border text-center">
                 <div class="text-6xl mb-4">{{ detailView.data.emoji }}</div>
                 <h2 class="text-2xl font-bold">{{ detailView.data.name }}</h2>
                 <p class="text-gray-500 mt-2">{{ detailView.data.id }}</p>
               </div>
               
-              <div class="bg-[#1f1f1f] rounded-lg p-4 border border-[#333]">
+              <div class="bg-[#1f1f1f] rounded-lg p-4 border">
                 <h3 class="text-xs text-gray-500 uppercase mb-3">配置</h3>
                 <div class="space-y-2 text-sm">
                   <div class="flex justify-between">
@@ -511,7 +511,7 @@
               
               <div v-if="detailView.detail?.docs && Object.keys(detailView.detail.docs).length > 0" class="space-y-2">
                 <h3 class="text-xs text-gray-500 uppercase">文檔</h3>
-                <div v-for="(content, docName) in detailView.detail.docs" :key="docName" class="border border-[#333] rounded-lg overflow-hidden">
+                <div v-for="(content, docName) in detailView.detail.docs" :key="docName" class="border rounded-lg overflow-hidden">
                   <button @click="toggleDoc(docName)" class="w-full p-2 text-left flex items-center justify-between bg-[#1f1f1f] hover:bg-[#252525]">
                     <span>{{ docName }}</span>
                     <i class="bi" :class="expandedDocs[docName] ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
@@ -525,12 +525,12 @@
             
             <!-- Channel 詳情 -->
             <div v-else-if="detailView.type === 'channel'" class="space-y-4">
-              <div class="bg-[#1f1f1f] rounded-lg p-6 border border-[#333] text-center">
+              <div class="bg-[#1f1f1f] rounded-lg p-6 border text-center">
                 <div class="text-6xl mb-4">📱</div>
                 <h2 class="text-2xl font-bold capitalize">{{ detailView.name }}</h2>
                 <p class="text-gray-500 mt-2">{{ detailView.data.accountCount }} accounts</p>
               </div>
-              <div class="bg-[#1f1f1f] rounded-lg p-4 border border-[#333]">
+              <div class="bg-[#1f1f1f] rounded-lg p-4 border">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full" :class="detailView.data.enabled ? 'bg-green-500' : 'bg-red-500'"></span>
                   <span>{{ detailView.data.enabled ? '已啟用' : '已停用' }}</span>
@@ -616,11 +616,11 @@
         </div>
         
         <!-- 輸入區 -->
-        <div class="p-4 border-t border-[#2a2a2a]">
+        <div class="p-4 border-t">
           <!-- 圖片預覽 -->
           <div v-if="uploadedImages.length > 0" class="mb-2 flex gap-2 flex-wrap">
             <div v-for="(img, idx) in uploadedImages" :key="idx" class="relative">
-              <img :src="img.preview" class="w-16 h-16 object-cover rounded-lg border border-[#333]">
+              <img :src="img.preview" class="w-16 h-16 object-cover rounded-lg border">
               <button 
                 @click="removeImage(idx)"
                 class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
@@ -633,7 +633,7 @@
           <form @submit.prevent="sendMessage" class="flex gap-2">
             <!-- 圖片上傳按鈕 -->
             <label 
-              class="bg-[#1f1f1f] hover:bg-[#252525] border border-[#333] rounded-lg px-3 py-2 cursor-pointer transition-colors"
+              class="bg-[#1f1f1f] hover:bg-[#252525] border rounded-lg px-3 py-2 cursor-pointer transition-colors"
               :class="{'opacity-50 cursor-not-allowed': isLoading}"
             >
               <input 
@@ -652,7 +652,7 @@
               :disabled="isLoading"
               type="text" 
               placeholder="輸入訊息..."
-              class="flex-1 bg-[#1f1f1f] border border-[#333] rounded-lg px-4 py-3 focus:outline-none focus:border-[#2563eb] transition-colors"
+              class="flex-1 bg-[#1f1f1f] rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-colors"
               @keydown.enter.exact.prevent="sendMessage"
             >
             <button 
