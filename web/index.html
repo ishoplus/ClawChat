@@ -293,14 +293,18 @@
         <!-- 模型選擇 (僅在對話模式下顯示) -->
         <div v-if="currentView === 'chat'" class="p-4">
           <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
-          <select 
-            v-model="selectedModel" 
-            class="mt-2 w-full bg-[#1f1f1f] rounded-lg p-3 text-sm"
-          >
-            <option v-for="model in models" :key="model.id" :value="model.id">
-              {{ model.name }}
-            </option>
-          </select>
+          <div class="relative mt-2">
+            <select 
+              v-model="selectedModel" 
+              class="mt-2 w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 text-sm appearance-none cursor-pointer"
+              style="color: var(--text-primary, #fff);"
+            >
+              <option v-for="model in models" :key="model.id" :value="model.id" style="background: #1f1f1f; color: #fff;">
+                {{ model.name }}
+              </option>
+            </select>
+            <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+          </div>
         </div>
         
         <!-- 檔案瀏覽器 (僅在對話模式下顯示) -->
