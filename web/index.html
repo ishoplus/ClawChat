@@ -130,7 +130,6 @@
     
     #app .absolute.top-full .p-2 {
       padding: 12px !important;
-      border-bottom: 1px solid var(--border-color);
     }
     
     /* Modal/Preview */
@@ -219,7 +218,7 @@
           <div class="relative mt-2">
             <button 
               @click="showAgentDropdown = !showAgentDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] border rounded-lg p-3 flex items-center gap-3 transition-colors"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
             >
               <span class="text-2xl">{{ selectedAgent.identity.emoji }}</span>
               <div class="text-left flex-1">
@@ -255,7 +254,7 @@
           <div class="relative mt-2">
             <button 
               @click="showSessionDropdown = !showSessionDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] border rounded-lg p-2 flex items-center gap-2 transition-colors text-sm"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-2 transition-colors text-sm"
             >
               <i class="bi bi-chat-dots text-gray-400"></i>
               <span class="flex-1 text-left truncate">{{ currentSessionName }}</span>
@@ -264,7 +263,7 @@
             
             <!-- Session Dropdown -->
             <div v-if="showSessionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <div class="p-3 border-b" style="border-color: var(--border-color);">
+              <div class="p-3">
                 <button
                   @click="createNewSession"
                   class="w-full p-2 text-sm text-blue-400 hover:bg-[#2a2a2a] rounded flex items-center gap-2"
