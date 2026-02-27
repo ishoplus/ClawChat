@@ -9,14 +9,14 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing:ox; }
     html, body, #app { height: 100%; margin: 0; padding: 0; }
     body { background: #0f0f0f; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #1a1a1a; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: #333;adius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #444; }
     
     /* Message animations */
@@ -141,19 +141,19 @@
     .markdown-body h3 { font-size: 1.1em; }
     .markdown-body p { margin: 0.5em 0; }
     .markdown-body p:last-child { margin-bottom: 0; }
-    .markdown-body code { background: var(--bg-hover); padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
-    .markdown-body pre { background: var(--bg-hover); padding: 1em; border-radius: 6px; overflow-x: auto; margin: 0.5em 0; }
+    .markdown-body code { background: var(--bg-hover); padding: 0.2em 0.4em;adius: 3px; font-size: 0.9em; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
+    .markdown-body pre { background: var(--bg-hover); padding: 1em;adius: 6px; overflow-x: auto; margin: 0.5em 0; }
     .markdown-body pre code { background: none; padding: 0; }
     .markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin: 0.5em 0; }
     .markdown-body li { margin: 0.25em 0; }
     .markdown-body li > ul, .markdown-body li > ol { margin: 0.25em 0; }
-    .markdown-body blockquote { border-left: 3px solid var(--accent); padding-left: 1em; color: var(--text-muted); margin: 0.5em 0; }
+    .markdown-body blockquote { padding-left: 1em; color: var(--text-muted); margin: 0.5em 0; }
     .markdown-body a { color: var(--accent); text-decoration: underline; }
     .markdown-body a:hover { color: var(--accent-hover); }
     .markdown-body table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
-    .markdown-body th, .markdown-body td { border: 1px solid var(--border-color); padding: 0.5em; text-align: left; }
+    .markdown-body th, .markdown-body td { padding: 0.5em; text-align: left; }
     .markdown-body th { background: var(--bg-hover); }
-    .markdown-body hr { border: none; border-top: 1px solid var(--border-color); margin: 1em 0; }
+    .markdown-body hr { border: none; margin: 1em 0; }
     .markdown-body img { max-width: 100%; border-radius: 6px; margin: 0.5em 0; }
     .markdown-body strong { color: var(--text-primary); font-weight: bold; }
     .markdown-body em { font-style: italic; }
@@ -164,9 +164,9 @@
     <div class="flex h-full">
       
       <!-- 側邊欄：Agent 選擇器 -->
-      <aside class="w-72 bg-[#161616] border-r flex flex-col">
+      <aside class="w-72 bg-[#161616] flex flex-col">
         <!-- Logo + 頁籤切換 -->
-        <div class="p-4 border-b">
+        <div class="p-4">
           <div class="flex gap-2 mb-3">
             <button 
               @click="currentView = 'chat'"
@@ -237,7 +237,7 @@
         </div>
         
         <!-- Session 控制 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t">
+        <div v-if="currentView === 'chat'" class="p-4">
           <label class="text-xs text-gray-500 uppercase tracking-wider">對話</label>
           <div class="relative mt-2">
             <button 
@@ -251,7 +251,7 @@
             
             <!-- Session Dropdown -->
             <div v-if="showSessionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border rounded-lg shadow-xl z-50">
-              <div class="p-2 border-b">
+              <div class="p-2">
                 <button
                   @click="createNewSession"
                   class="w-full p-2 text-sm text-blue-400 hover:bg-[#2a2a2a] rounded flex items-center gap-2"
@@ -279,7 +279,7 @@
         </div>
         
         <!-- 模型選擇 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t">
+        <div v-if="currentView === 'chat'" class="p-4">
           <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
           <select 
             v-model="selectedModel" 
@@ -292,7 +292,7 @@
         </div>
         
         <!-- 檔案瀏覽器 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t flex-1 overflow-hidden flex flex-col">
+        <div v-if="currentView === 'chat'" class="p-4 flex-1 overflow-hidden flex flex-col">
           <button 
             @click="toggleFileBrowser"
             class="w-full flex items-center justify-between text-xs text-gray-500 uppercase tracking-wider mb-2"
@@ -342,7 +342,7 @@
           <!-- 檔案預覽彈窗 -->
           <div v-if="filePreviewContent !== null" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" @click.self="filePreviewContent = null">
             <div class="bg-[#1f1f1f] rounded-lg w-full max-w-3xl max-h-[80vh] flex flex-col border">
-              <div class="p-3 border-b flex items-center justify-between">
+              <div class="p-3 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <i class="bi bi-file-text"></i>
                   <span class="font-medium">{{ filePreviewPath }}</span>
@@ -366,7 +366,7 @@
         </div>
         
         <!-- 快捷操作 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4 border-t mt-auto">
+        <div v-if="currentView === 'chat'" class="p-4 mt-auto">
           <button 
             @click="clearChat"
             class="w-full p-2 text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -393,13 +393,13 @@
                 </div>
                 
                 <!-- ngrok -->
-                <div v-if="ngrokUrl" class="pt-3 border-t">
+                <div v-if="ngrokUrl" class="pt-3">
                   <div class="text-xs text-gray-500 mb-2">公開網址</div>
                   <a :href="ngrokUrl" target="_blank" class="text-blue-400 hover:text-blue-300 text-sm break-all">
                     {{ ngrokUrl }}
                   </a>
                 </div>
-                <div v-else class="pt-3 border-t">
+                <div v-else class="pt-3">
                   <button 
                     @click="startNgrok"
                     class="w-full py-2 bg-[#2563eb] hover:bg-[#1d4ed8] rounded-lg text-sm transition-colors"
@@ -570,7 +570,7 @@
             <div class="max-w-[70%] rounded-lg"
                  :class="msg.role === 'user' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f]'">
               <!-- 訊息 header: 時間 + 複製按鈕 -->
-              <div class="flex items-center justify-between gap-2 px-3 pt-2 pb-1 border-b border-white/10">
+              <div class="flex items-center justify-between gap-2 px-3 pt-2 pb-1">
                 <span class="text-[10px] opacity-50">{{ formatTime(msg.timestamp) }}</span>
                 <button 
                   @click="copyMessage(msg.content)"
@@ -587,7 +587,7 @@
                     v-for="(img, imgIdx) in msg.images" 
                     :key="imgIdx"
                     :src="img" 
-                    class="max-w-32 max-h-32 rounded border border-white/20"
+                    class="max-w-32 max-h-32 rounded"
                   >
                 </div>
                 <!-- 文字內容 (Markdown 渲染 for AI) -->
@@ -616,7 +616,7 @@
         </div>
         
         <!-- 輸入區 -->
-        <div class="p-4 border-t">
+        <div class="p-4">
           <!-- 圖片預覽 -->
           <div v-if="uploadedImages.length > 0" class="mb-2 flex gap-2 flex-wrap">
             <div v-for="(img, idx) in uploadedImages" :key="idx" class="relative">
