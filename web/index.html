@@ -192,7 +192,7 @@
               <i class="bi" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
             </button>
           </div>
-          <h1 v-if="currentView === 'chat'" class="text-xl font-bold flex items-center gap-2">
+          <h1 v-if="currentView === 'chat'" class="text-xl font-bold flex items-center gap-2" :style="{ color: isDarkMode ? '#fff' : '#111827' }">
             <span class="text-2xl">💬</span>
             <span>ClawChat</span>
           </h1>
