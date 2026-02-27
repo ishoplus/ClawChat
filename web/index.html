@@ -117,7 +117,20 @@
     /* Agent dropdown */
     #app .agent-dropdown {
       background-color: var(--bg-secondary) !important;
-      border-color: var(--border-color) !important;
+    }
+    
+    /* Dropdown menu styling */
+    #app .absolute.top-full {
+      background-color: var(--bg-secondary) !important;
+    }
+    
+    #app .absolute.top-full button {
+      padding: 12px !important; /* p-3 */
+    }
+    
+    #app .absolute.top-full .p-2 {
+      padding: 12px !important;
+      border-bottom: 1px solid var(--border-color);
     }
     
     /* Modal/Preview */
@@ -217,7 +230,7 @@
             </button>
             
             <!-- Dropdown -->
-            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border rounded-lg shadow-xl z-50">
+            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
               <button
                 v-for="agent in agents"
                 :key="agent.id"
@@ -250,8 +263,8 @@
             </button>
             
             <!-- Session Dropdown -->
-            <div v-if="showSessionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border rounded-lg shadow-xl z-50">
-              <div class="p-2">
+            <div v-if="showSessionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
+              <div class="p-3 border-b" style="border-color: var(--border-color);">
                 <button
                   @click="createNewSession"
                   class="w-full p-2 text-sm text-blue-400 hover:bg-[#2a2a2a] rounded flex items-center gap-2"
@@ -264,7 +277,7 @@
                 v-for="session in sessions"
                 :key="session.id"
                 @click="switchSession(session)"
-                class="w-full p-2 text-sm hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
+                class="w-full p-3 text-sm hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
                 :class="{'bg-[#252525]': session.id === currentSession}"
               >
                 <i class="bi bi-chat-dots text-gray-500"></i>
