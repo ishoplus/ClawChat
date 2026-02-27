@@ -37,36 +37,78 @@
     }
     
     /* Agent selector dropdown */
+    :root {
+      --bg-primary: #161616;
+      --bg-secondary: #1f1f1f;
+      --bg-hover: #252525;
+      --border-color: #333;
+      --text-primary: #fff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+    }
+    
+    .light-theme {
+      --bg-primary: #f5f5f5;
+      --bg-secondary: #ffffff;
+      --bg-hover: #e5e5e5;
+      --border-color: #ddd;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666;
+      --text-muted: #999;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+    }
+    
+    /* Light theme overrides for Tailwind classes */
+    .light-theme .bg-\[\#161616\] { background-color: var(--bg-primary) !important; }
+    .light-theme .bg-\[\#1f1f1f\] { background-color: var(--bg-secondary) !important; }
+    .light-theme .bg-\[\#252525\]\:hover:hover { background-color: var(--bg-hover) !important; }
+    .light-theme .border-\[\#333\] { border-color: var(--border-color) !important; }
+    .light-theme .text-gray-400 { color: var(--text-secondary) !important; }
+    .light-theme .text-gray-500 { color: var(--text-muted) !important; }
+    .light-theme .text-gray-300 { color: var(--text-secondary) !important; }
+    .light-theme .text-white { color: var(--text-primary) !important; }
+    .light-theme .hover\:text-white:hover { color: var(--text-primary) !important; }
+    .light-theme .hover\:bg-\[\#252525\]\:hover:hover { background-color: var(--bg-hover) !important; }
+    .light-theme .hover\:bg-\[\#2a2a2a\]\:hover:hover { background-color: var(--bg-hover) !important; }
+    .light-theme .bg-\[\#2a2a2a\] { background-color: var(--bg-hover) !important; }
+    .light-theme .text-gray-600 { color: var(--text-secondary) !important; }
+    .light-theme .text-gray-700 { color: var(--text-primary) !important; }
+    .light-theme .bg-gray-200 { background-color: var(--bg-secondary) !important; }
+    .light-theme .hover\:bg-gray-300\:hover:hover { background-color: var(--bg-hover) !important; }
+    
     .agent-dropdown { max-height: 300px; overflow-y: auto; }
     
     /* Markdown preview styles */
     .markdown-body { line-height: 1.6; }
-    .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: #fff; margin: 1em 0 0.5em; font-weight: bold; }
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 { color: var(--text-primary); margin: 1em 0 0.5em; font-weight: bold; }
     .markdown-body h1 { font-size: 1.5em; }
     .markdown-body h2 { font-size: 1.3em; }
     .markdown-body h3 { font-size: 1.1em; }
     .markdown-body p { margin: 0.5em 0; }
     .markdown-body p:last-child { margin-bottom: 0; }
-    .markdown-body code { background: #2a2a2a; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
-    .markdown-body pre { background: #2a2a2a; padding: 1em; border-radius: 6px; overflow-x: auto; margin: 0.5em 0; }
+    .markdown-body code { background: var(--bg-hover); padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
+    .markdown-body pre { background: var(--bg-hover); padding: 1em; border-radius: 6px; overflow-x: auto; margin: 0.5em 0; }
     .markdown-body pre code { background: none; padding: 0; }
     .markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin: 0.5em 0; }
     .markdown-body li { margin: 0.25em 0; }
     .markdown-body li > ul, .markdown-body li > ol { margin: 0.25em 0; }
-    .markdown-body blockquote { border-left: 3px solid #2563eb; padding-left: 1em; color: #888; margin: 0.5em 0; }
-    .markdown-body a { color: #3b82f6; text-decoration: underline; }
-    .markdown-body a:hover { color: #60a5fa; }
+    .markdown-body blockquote { border-left: 3px solid var(--accent); padding-left: 1em; color: var(--text-muted); margin: 0.5em 0; }
+    .markdown-body a { color: var(--accent); text-decoration: underline; }
+    .markdown-body a:hover { color: var(--accent-hover); }
     .markdown-body table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
-    .markdown-body th, .markdown-body td { border: 1px solid #333; padding: 0.5em; text-align: left; }
-    .markdown-body th { background: #2a2a2a; }
-    .markdown-body hr { border: none; border-top: 1px solid #333; margin: 1em 0; }
+    .markdown-body th, .markdown-body td { border: 1px solid var(--border-color); padding: 0.5em; text-align: left; }
+    .markdown-body th { background: var(--bg-hover); }
+    .markdown-body hr { border: none; border-top: 1px solid var(--border-color); margin: 1em 0; }
     .markdown-body img { max-width: 100%; border-radius: 6px; margin: 0.5em 0; }
-    .markdown-body strong { color: #fff; font-weight: bold; }
+    .markdown-body strong { color: var(--text-primary); font-weight: bold; }
     .markdown-body em { font-style: italic; }
   </style>
 </head>
 <body>
-  <div id="app">
+  <div id="app" :class="{ 'light-theme': !isDarkMode }">
     <div class="flex h-full">
       
       <!-- 側邊欄：Agent 選擇器 -->
@@ -87,6 +129,15 @@
               :class="currentView === 'manage' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
             >
               <i class="bi bi-gear me-1"></i> 管理
+            </button>
+            <!-- 主題切換 -->
+            <button 
+              @click="toggleTheme"
+              class="p-2 rounded-lg transition-colors"
+              :class="isDarkMode ? 'bg-[#1f1f1f] text-yellow-400 hover:bg-[#252525]' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
+              :title="isDarkMode ? '切換到白天模式' : '切換到夜晚模式'"
+            >
+              <i class="bi" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
             </button>
           </div>
           <h1 v-if="currentView === 'chat'" class="text-xl font-bold flex items-center gap-2">
@@ -699,6 +750,23 @@
         const filePreviewPath = ref('');
         const filePreviewImage = ref(null);
         
+        // 主題模式
+        const isDarkMode = ref(true);
+        
+        // 切換主題
+        const toggleTheme = () => {
+          isDarkMode.value = !isDarkMode.value;
+          localStorage.setItem('clawchat_theme', isDarkMode.value ? 'dark' : 'light');
+        };
+        
+        // 載入主題
+        const loadTheme = () => {
+          const saved = localStorage.getItem('clawchat_theme');
+          if (saved) {
+            isDarkMode.value = saved === 'dark';
+          }
+        };
+        
         // 格式化檔案大小
         const formatFileSize = (bytes) => {
           if (!bytes) return '';
@@ -1173,6 +1241,9 @@
         
         // 點擊外部關閉 dropdown
         onMounted(() => {
+          // 載入主題
+          loadTheme();
+          
           // 確保 session 已初始化
           if (!currentSession.value && sessions.value.length > 0) {
             currentSession.value = sessions.value[0].id;
@@ -1251,6 +1322,8 @@
           toggleFileBrowser,
           fileBrowserNavigate,
           openFile,
+          isDarkMode,
+          toggleTheme,
           startNgrok,
           showAgentDetail,
           showChannelDetail,
