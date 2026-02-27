@@ -1,0 +1,3 @@
+# ClawChat Python Dependencies
+# 不需要額外依賴，使用標準庫
+# 僅供參考
