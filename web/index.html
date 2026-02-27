@@ -9,18 +9,19 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
-    * { box-sizing:ox; }
+    * { box-sizing: border-box; }
     html, body, #app { height: 100%; margin: 0; padding: 0; }
     body { background: #0f0f0f; color: #e5e5e5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     
     /* Custom Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #1a1a1a; }
-    ::-webkit-scrollbar-thumb { background: #333;adius: 3px; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #444; }
     
     /* Message animations */
     .message-enter-active { animation: slideIn 0.3s ease-out; }
+    .animate-slide-in { animation: slideIn 0.3s ease-out; }
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -153,8 +154,8 @@
     .markdown-body h3 { font-size: 1.1em; }
     .markdown-body p { margin: 0.5em 0; }
     .markdown-body p:last-child { margin-bottom: 0; }
-    .markdown-body code { background: var(--bg-hover); padding: 0.2em 0.4em;adius: 3px; font-size: 0.9em; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
-    .markdown-body pre { background: var(--bg-hover); padding: 1em;adius: 6px; overflow-x: auto; margin: 0.5em 0; }
+    .markdown-body code { background: var(--bg-hover); padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace; }
+    .markdown-body pre { background: var(--bg-hover); padding: 1em; border-radius: 6px; overflow-x: auto; margin: 0.5em 0; }
     .markdown-body pre code { background: none; padding: 0; }
     .markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin: 0.5em 0; }
     .markdown-body li { margin: 0.25em 0; }
@@ -173,10 +174,23 @@
 </head>
 <body>
   <div id="app">
+    <!-- Toast 通知 -->
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2">
+      <div 
+        v-for="toast in toasts" 
+        :key="toast.id"
+        class="px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 text-lg font-medium animate-slide-in"
+        :class="toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'"
+      >
+        <i class="bi" :class="toast.type === 'error' ? 'bi-exclamation-circle' : 'bi-check-circle'"></i>
+        <span>{{ toast.message }}</span>
+      </div>
+    </div>
+
     <div class="flex h-full">
       
       <!-- 側邊欄：Agent 選擇器 -->
-      <aside class="w-72 bg-[#161616] flex flex-col">
+      <aside class="w-72 bg-[#161616] flex flex-col hidden md:flex">
         <!-- Logo + 頁籤切換 -->
         <div class="p-4">
           <div class="flex gap-2 mb-3">
@@ -294,16 +308,33 @@
         <div v-if="currentView === 'chat'" class="p-4">
           <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
           <div class="relative mt-2">
-            <select 
-              v-model="selectedModel" 
-              class="mt-2 w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 text-sm appearance-none cursor-pointer"
-              style="color: var(--text-primary, #fff);"
+            <button 
+              @click="showModelDropdown = !showModelDropdown"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
             >
-              <option v-for="model in models" :key="model.id" :value="model.id" style="background: #1f1f1f; color: #fff;">
-                {{ model.name }}
-              </option>
-            </select>
-            <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"></i>
+              <i class="bi bi-cpu text-gray-400"></i>
+              <div class="text-left flex-1">
+                <div class="text-sm">{{ selectedModelName }}</div>
+              </div>
+              <i class="bi bi-chevron-down text-gray-500"></i>
+            </button>
+            
+            <!-- Model Dropdown -->
+            <div v-if="showModelDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
+              <button
+                v-for="model in models"
+                :key="model.id"
+                @click="selectedModel = model.id; showModelDropdown = false"
+                class="w-full p-3 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
+                :class="{'bg-[#252525]': model.id === selectedModel}"
+              >
+                <i class="bi bi-cpu text-gray-400"></i>
+                <div class="text-left flex-1">
+                  <div class="text-sm">{{ model.name }}</div>
+                </div>
+                <i v-if="model.id === selectedModel" class="bi bi-check text-green-500"></i>
+              </button>
+            </div>
           </div>
         </div>
         
@@ -363,9 +394,18 @@
                   <i class="bi bi-file-text"></i>
                   <span class="font-medium">{{ filePreviewPath }}</span>
                 </div>
-                <button @click="filePreviewContent = null" class="text-gray-400 hover:text-white">
-                  <i class="bi bi-x-lg"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                  <button 
+                    @click="copyFileContent"
+                    class="text-gray-400 hover:text-white p-1"
+                    title="複製內容"
+                  >
+                    <i class="bi bi-clipboard"></i>
+                  </button>
+                  <button @click="filePreviewContent = null" class="text-gray-400 hover:text-white">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
               </div>
               <div class="flex-1 overflow-auto p-3">
                 <!-- 圖片預覽 -->
@@ -393,6 +433,117 @@
         </div>
       </aside>
       
+      <!-- 手機版選單按鈕 -->
+      <button 
+        @click="showMobileMenu = !showMobileMenu"
+        class="md:hidden fixed top-4 left-4 z-50 bg-[#1f1f1f] hover:bg-[#252525] p-2 rounded-lg border"
+      >
+        <i class="bi" :class="showMobileMenu ? 'bi-x-lg' : 'bi-list'"></i>
+      </button>
+
+      <!-- 手機版側邊欄遮罩 -->
+      <div 
+        v-if="showMobileMenu" 
+        @click="showMobileMenu = false"
+        class="md:hidden fixed inset-0 bg-black/50 z-40"
+      ></div>
+
+      <!-- 手機版側邊欄 -->
+      <aside 
+        v-if="showMobileMenu"
+        class="md:hidden fixed inset-y-0 left-0 w-72 bg-[#161616] flex flex-col z-50 transform transition-transform"
+      >
+        <div class="p-4 flex justify-end">
+          <button @click="showMobileMenu = false" class="text-gray-400 hover:text-white">
+            <i class="bi bi-x-lg text-xl"></i>
+          </button>
+        </div>
+        <!-- Agent 選擇 -->
+        <div class="p-4 pt-0">
+          <label class="text-xs text-gray-500 uppercase tracking-wider">選擇 Agent</label>
+          <div class="relative mt-2">
+            <button 
+              @click="showAgentDropdown = !showAgentDropdown"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
+            >
+              <span class="text-2xl">{{ selectedAgent.identity.emoji }}</span>
+              <div class="text-left flex-1">
+                <div class="font-medium">{{ selectedAgent.identity.name }}</div>
+                <div class="text-xs text-gray-500">{{ selectedAgent.name }}</div>
+              </div>
+              <i class="bi bi-chevron-down text-gray-500"></i>
+            </button>
+            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
+              <button
+                v-for="agent in agents"
+                :key="agent.id"
+                @click="selectAgent(agent); showMobileMenu = false"
+                class="w-full p-3 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
+                :class="{'bg-[#252525]': agent.id === selectedAgent.id}"
+              >
+                <span class="text-2xl">{{ agent.identity.emoji }}</span>
+                <div class="text-left flex-1">
+                  <div class="font-medium">{{ agent.identity.name }}</div>
+                  <div class="text-xs text-gray-500">{{ agent.name }}</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Session 控制 -->
+        <div class="p-4 pt-0">
+          <label class="text-xs text-gray-500 uppercase tracking-wider">對話</label>
+          <button @click="showMobileMenu = false" class="w-full mt-2 bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 text-left">
+            <i class="bi bi-chat-dots text-gray-400 me-2"></i>
+            {{ currentSessionName }}
+          </button>
+        </div>
+        <!-- 模型選擇 -->
+        <div class="p-4 pt-0">
+          <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
+          <div class="relative mt-2">
+            <button 
+              @click="showModelDropdown = !showModelDropdown"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
+            >
+              <i class="bi bi-cpu text-gray-400"></i>
+              <div class="text-left flex-1">
+                <div class="text-sm">{{ selectedModelName }}</div>
+              </div>
+              <i class="bi bi-chevron-down text-gray-500"></i>
+            </button>
+            
+            <!-- Model Dropdown -->
+            <div v-if="showModelDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
+              <button
+                v-for="model in models"
+                :key="model.id"
+                @click="selectedModel = model.id; showModelDropdown = false"
+                class="w-full p-3 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
+                :class="{'bg-[#252525]': model.id === selectedModel}"
+              >
+                <i class="bi bi-cpu text-gray-400"></i>
+                <div class="text-left flex-1">
+                  <div class="text-sm">{{ model.name }}</div>
+                </div>
+                <i v-if="model.id === selectedModel" class="bi bi-check text-green-500"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- 切換主題 -->
+        <div class="p-4 pt-0 mt-auto">
+          <button 
+            @click="toggleTheme"
+            class="w-full p-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            :class="isDarkMode ? 'bg-[#1f1f1f] text-yellow-400' : 'bg-gray-200 text-gray-700'"
+          >
+            <i class="bi" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
+            <span>{{ isDarkMode ? '白天模式' : '夜晚模式' }}</span>
+          </button>
+        </div>
+      </aside>
+
       <!-- 主區域 -->
       <main class="flex-1 flex flex-col">
         <!-- 管理頁面內容 (主區域) -->
@@ -584,13 +735,13 @@
             
             <!-- 訊息內容 -->
             <div class="max-w-[70%] rounded-lg"
-                 :class="msg.role === 'user' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f]'">
+                 :class="msg.role === 'user' ? 'bg-[#2563eb] text-white' : (isDarkMode ? 'bg-[#1f1f1f] text-white' : 'bg-[#1f1f1f] text-gray-700')">
               <!-- 訊息 header: 時間 + 複製按鈕 -->
               <div class="flex items-center justify-between gap-2 px-3 pt-2 pb-1">
-                <span class="text-[10px] opacity-50">{{ formatTime(msg.timestamp) }}</span>
+                <span class="text-[10px]" :class="isDarkMode ? 'opacity-50' : 'opacity-60'">{{ formatTime(msg.timestamp) }}</span>
                 <button 
                   @click="copyMessage(msg.content)"
-                  class="text-xs opacity-50 hover:opacity-100 transition-opacity"
+                  class="text-xs" :class="isDarkMode ? 'opacity-50 hover:opacity-100' : 'opacity-40 hover:opacity-70'"
                   title="複製訊息"
                 >
                   <i class="bi bi-clipboard"></i>
@@ -689,9 +840,7 @@
 
     createApp({
       setup() {
-        // API 配置 - 使用本地代理
-        const API_BASE = '';
-        const API_KEY = ''; // Gateway token
+        // API 配置 - 使用本地代理（由 Next.js 處理）
         
         // Agent 列表
         const agents = ref([
@@ -722,6 +871,18 @@
         const inputText = ref('');
         const isLoading = ref(false);
         const showAgentDropdown = ref(false);
+        const showModelDropdown = ref(false);
+        const showMobileMenu = ref(false);
+        const toasts = ref([]);
+        
+        // Toast 通知
+        const showToast = (message, type = 'success') => {
+          const id = Date.now();
+          toasts.value.push({ id, message, type });
+          setTimeout(() => {
+            toasts.value = toasts.value.filter(t => t.id !== id);
+          }, 3000);
+        };
         
         // Session 控制 - 從 localStorage 載入
         const STORAGE_KEY = 'clawchat_sessions';
@@ -898,9 +1059,24 @@
           try {
             const text = typeof content === 'string' ? content : (content.find?.(c => c.type === 'text')?.text || '');
             await navigator.clipboard.writeText(text);
-            // 可選：顯示複製成功提示
+            showToast('已複製到剪貼簿');
           } catch (e) {
             console.error('Failed to copy:', e);
+            showToast('複製失敗', 'error');
+          }
+        };
+        
+        // 複製檔案內容
+        const copyFileContent = async () => {
+          try {
+            const text = filePreviewImage.value 
+              ? ''  // 圖片無法複製文字
+              : (filePreviewContent.value || '');
+            await navigator.clipboard.writeText(text);
+            showToast('已複製到剪貼簿');
+          } catch (e) {
+            console.error('Failed to copy:', e);
+            showToast('複製失敗', 'error');
           }
         };
         
@@ -955,7 +1131,7 @@
               const data = await res.json();
               
               if (data.error) {
-                alert(data.error);
+                showToast(data.error, 'error');
                 return;
               }
               
@@ -972,7 +1148,7 @@
             const data = await res.json();
             
             if (data.error) {
-              alert(data.error);
+              showToast(data.error, 'error');
               return;
             }
             
@@ -981,7 +1157,7 @@
             filePreviewImage.value = null; // 清空圖片
           } catch (e) {
             console.error('Failed to open file:', e);
-            alert('無法開啟檔案');
+            showToast('無法開啟檔案', 'error');
           }
         };
         
@@ -1287,6 +1463,11 @@
         };
         
         // Session 名稱
+        const selectedModelName = computed(() => {
+          const model = models.value.find(m => m.id === selectedModel.value);
+          return model ? model.name : selectedModel.value;
+        });
+        
         const currentSessionName = computed(() => {
           const s = sessions.value.find(s => s.id === currentSession.value);
           return s ? s.name : '新對話';
@@ -1360,7 +1541,17 @@
           document.addEventListener('click', (e) => {
             if (!e.target.closest('.relative')) {
               showAgentDropdown.value = false;
+              showModelDropdown.value = false;
               showSessionDropdown.value = false;
+            }
+          });
+          
+          // Escape 鍵關閉預覽
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+              filePreviewContent.value = null;
+              showMobileMenu.value = false;
+              showModelDropdown.value = false;
             }
           });
         });
@@ -1396,6 +1587,11 @@
           inputText,
           isLoading,
           showAgentDropdown,
+          showModelDropdown,
+          selectedModelName,
+          showMobileMenu,
+          toasts,
+          showToast,
           showSessionDropdown,
           uploadedImages,
           currentSession,
@@ -1439,6 +1635,7 @@
           removeImage,
           formatTime,
           copyMessage,
+          copyFileContent,
           renderContent
         };
       }
