@@ -62,6 +62,27 @@
       --accent-hover: #2563eb;
     }
     
+    /* 手機版底部導航 */
+    @media (max-width: 1023px) {
+      /* 確保主內容區域正確填滿可用空間 */
+      main {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden;
+      }
+      /* 對話區域 - 無底部導航 */
+      .chat-area {
+        overflow-y: auto;
+        height: 100%;
+      }
+      /* 其他視圖內容 - 有底部導航 */
+      .view-content {
+        padding-bottom: 70px !important;
+        overflow-y: auto;
+        height: 100%;
+      }
+    }
+    
     #app {
       background-color: var(--bg-primary, #161616);
       min-height: 100vh;
@@ -275,74 +296,86 @@
 
     <div class="flex h-full">
       
-      <!-- 側邊欄：簡化導航 -->
-      <aside class="w-20 bg-[#161616] flex flex-col hidden md:flex border-r border-[#333]">
-        <!-- Logo -->
-        <div class="p-3 border-b border-[#333]">
-          <div class="flex flex-col items-center gap-1">
-            <span class="text-2xl">💬</span>
+      <!-- 左側邊欄：Session 列表 -->
+      <aside class="w-64 bg-[#161616] flex flex-col hidden md:flex border-r border-[#333]">
+        <!-- 標題 -->
+        <div class="p-4 border-b border-[#333] flex items-center justify-between">
+          <h2 class="font-bold">對話</h2>
+          <button 
+            @click="showNewChatModal = true"
+            class="p-2 rounded-lg hover:bg-[#252525] transition-colors"
+            title="新對話"
+          >
+            <i class="bi bi-plus-circle text-xl text-blue-500"></i>
+          </button>
+        </div>
+        
+        <!-- Session 列表 -->
+        <div class="flex-1 overflow-y-auto p-2">
+          <button 
+            v-for="session in sessions" 
+            :key="session.id"
+            @click="switchSession(session); currentView = 'chat'"
+            class="w-full p-3 rounded-lg flex items-center gap-3 mb-1 transition-colors text-left"
+            :class="session.id === currentSession ? 'bg-[#2563eb] text-white' : 'hover:bg-[#252525]'"
+          >
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0"
+              :class="session.id === currentSession ? 'bg-white/20' : 'bg-[#333]'"
+            >
+              <span v-if="session.source === 'telegram'">📱</span>
+              <span v-else-if="session.source === 'discord'">💬</span>
+              <span v-else-if="session.source === 'webchat'">🌐</span>
+              <span v-else-if="session.source === 'cron'">⏰</span>
+              <span v-else>💬</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate">{{ session.name }}</div>
+              <div class="text-xs truncate opacity-70">
+                <span v-if="agents.find(a => a.id === session.agentId)">{{ agents.find(a => a.id === session.agentId).identity.emoji }} {{ agents.find(a => a.id === session.agentId).identity.name }}</span>
+                <span v-else>{{ session.preview || '尚無訊息' }}</span>
+              </div>
+            </div>
+          </button>
+          
+          <!-- 無對話時 -->
+          <div v-if="sessions.length === 0" class="text-center py-8 text-gray-500">
+            <p class="text-sm">尚無對話</p>
           </div>
         </div>
         
-        <!-- 導航圖標 -->
-        <div class="flex-1 flex flex-col items-center py-3 gap-1">
-          <button 
-            @click="currentView = 'chat'"
-            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
-            :class="currentView === 'chat' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
-            title="對話"
-          >
-            <i class="bi bi-chat-dots text-lg"></i>
-            <span class="text-[10px]">對話</span>
-          </button>
-          <button 
-            @click="currentView = 'manage'"
-            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
-            :class="currentView === 'manage' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
-            title="管理"
-          >
-            <i class="bi bi-gear text-lg"></i>
-            <span class="text-[10px]">管理</span>
-          </button>
+        <!-- 底部導航 -->
+        <div class="p-2 border-t border-[#333] flex justify-around">
           <button 
             @click="currentView = 'board'"
-            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
+            class="p-2 rounded-lg transition-colors"
             :class="currentView === 'board' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
-            title="留言版"
+            title="留言板"
           >
-            <i class="bi bi-chat-square-text text-lg"></i>
-            <span class="text-[10px]">留言版</span>
+            <i class="bi bi-chat-square-text"></i>
           </button>
           <button 
             @click="currentView = 'schedule'"
-            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
+            class="p-2 rounded-lg transition-colors"
             :class="currentView === 'schedule' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
             title="排程"
           >
-            <i class="bi bi-clock text-lg"></i>
-            <span class="text-[10px]">排程</span>
+            <i class="bi bi-clock"></i>
           </button>
           <button 
-            @click="currentView = 'backlog'"
-            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
-            :class="currentView === 'backlog' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
-            title="看板"
+            @click="currentView = 'manage'"
+            class="p-2 rounded-lg transition-colors"
+            :class="currentView === 'manage' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
+            title="管理"
           >
-            <i class="bi bi-kanban text-lg"></i>
-            <span class="text-[10px]">看板</span>
+            <i class="bi bi-gear"></i>
           </button>
-        </div>
-        
-        <!-- 主題切換 -->
-        <div class="p-3 border-t border-[#333]">
           <button 
             @click="toggleTheme"
-            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5 mx-auto"
+            class="p-2 rounded-lg transition-colors"
             :class="isDarkMode ? 'text-yellow-400 hover:bg-[#252525]' : 'text-gray-700 hover:bg-gray-200'"
-            :title="isDarkMode ? '切換到白天模式' : '切換到夜晚模式'"
+            :title="isDarkMode ? '淺色模式' : '深色模式'"
           >
-            <i class="bi text-lg" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
-            <span class="text-[10px]" :class="isDarkMode ? 'text-yellow-400' : 'text-gray-700'">主題</span>
+            <i class="bi" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
           </button>
         </div>
       </aside>
@@ -443,189 +476,25 @@
           </button>
         </div>
       </aside>
-      
-      <!-- 手機版選單按鈕 -->
-      <button 
-        @click="showMobileMenu = !showMobileMenu"
-        class="md:hidden fixed top-4 left-4 z-50 bg-[#1f1f1f] hover:bg-[#252525] p-2 rounded-lg border"
-      >
-        <i class="bi" :class="showMobileMenu ? 'bi-x-lg' : 'bi-list'"></i>
-      </button>
-
-      <!-- 手機版側邊欄遮罩 -->
-      <div 
-        v-if="showMobileMenu" 
-        @click="showMobileMenu = false"
-        class="md:hidden fixed inset-0 bg-black/50 z-40"
-      ></div>
-
-      <!-- 手機版側邊欄 -->
-      <aside 
-        v-if="showMobileMenu"
-        class="md:hidden fixed inset-y-0 left-0 w-72 bg-[#161616] flex flex-col z-50 transform transition-transform"
-      >
-        <div class="p-4 flex justify-end">
-          <button @click="showMobileMenu = false" class="text-gray-400 hover:text-white">
-            <i class="bi bi-x-lg text-xl"></i>
-          </button>
-        </div>
-        <!-- Agent 選擇 -->
-        <div class="p-4 pt-0">
-          <label class="text-xs text-gray-500 uppercase tracking-wider">選擇 Agent</label>
-          <div class="relative mt-2">
-            <button 
-              @click="showAgentDropdown = !showAgentDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
-            >
-              <span class="text-2xl">{{ selectedAgent.identity.emoji }}</span>
-              <div class="text-left flex-1">
-                <div class="font-medium">{{ selectedAgent.identity.name }}</div>
-                <div class="text-xs text-gray-500">{{ selectedAgent.name }}</div>
-              </div>
-              <i class="bi bi-chevron-down text-gray-500"></i>
-            </button>
-            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <button
-                v-for="agent in agents"
-                :key="agent.id"
-                @click="selectAgent(agent); showMobileMenu = false"
-                class="w-full p-3 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
-                :class="{'bg-[#252525]': agent.id === selectedAgent.id}"
-              >
-                <span class="text-2xl">{{ agent.identity.emoji }}</span>
-                <div class="text-left flex-1">
-                  <div class="font-medium">{{ agent.identity.name }}</div>
-                  <div class="text-xs text-gray-500">{{ agent.name }}</div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- Session 控制 -->
-        <div class="p-4 pt-0">
-          <label class="text-xs text-gray-500 uppercase tracking-wider">對話</label>
-          <button @click="showMobileMenu = false" class="w-full mt-2 bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 text-left">
-            <i class="bi bi-chat-dots text-gray-400 me-2"></i>
-            {{ currentSessionName }}
-          </button>
-        </div>
-        <!-- 模型選擇 -->
-        <div class="p-4 pt-0">
-          <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
-          <div class="relative mt-2">
-            <button 
-              @click="showModelDropdown = !showModelDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
-            >
-              <i class="bi bi-cpu text-gray-400"></i>
-              <div class="text-left flex-1">
-                <div class="text-sm">{{ selectedModelName }}</div>
-              </div>
-              <i class="bi bi-chevron-down text-gray-500"></i>
-            </button>
-            
-            <!-- Model Dropdown -->
-            <div v-if="showModelDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <button
-                v-for="model in models"
-                :key="model.id"
-                @click="selectedModel = model.id; showModelDropdown = false"
-                class="w-full p-3 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
-                :class="{'bg-[#252525]': model.id === selectedModel}"
-              >
-                <i class="bi bi-cpu text-gray-400"></i>
-                <div class="text-left flex-1">
-                  <div class="text-sm">{{ model.name }}</div>
-                </div>
-                <i v-if="model.id === selectedModel" class="bi bi-check text-green-500"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- 切換主題 -->
-        <div class="p-4 pt-0 mt-auto">
-          <button 
-            @click="toggleTheme"
-            class="w-full p-2 rounded-lg flex items-center justify-center gap-2 transition-colors"
-            :class="isDarkMode ? 'bg-[#1f1f1f] text-yellow-400' : 'bg-gray-200 text-gray-700'"
-          >
-            <i class="bi" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
-            <span>{{ isDarkMode ? '白天模式' : '夜晚模式' }}</span>
-          </button>
-        </div>
-      </aside>
 
       <!-- 主區域 -->
       <main class="flex-1 flex flex-col">
         <!-- 頂部工具欄：Agent + Session + Model 選擇器 -->
         <div class="p-3 border-b border-[#333] flex items-center gap-3">
-          <!-- Agent 選擇 -->
-          <div class="relative" v-if="currentView === 'chat'">
-            <button 
-              @click="showAgentDropdown = !showAgentDropdown"
-              class="bg-[#1f1f1f] hover:bg-[#252525] rounded-lg px-3 py-2 flex items-center gap-2 transition-colors"
-            >
-              <span class="text-lg">{{ selectedAgent.identity.emoji }}</span>
-              <span class="text-sm font-medium">{{ selectedAgent.identity.name }}</span>
-              <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
-            </button>
-            
-            <!-- Agent Dropdown -->
-            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <button
-                v-for="agent in agents"
-                :key="agent.id"
-                @click="selectAgent(agent)"
-                class="w-full px-4 py-2 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
-                :class="{'bg-[#252525]': agent.id === selectedAgent.id}"
-              >
-                <span class="text-lg">{{ agent.identity.emoji }}</span>
-                <div class="text-left">
-                  <div class="font-medium text-sm">{{ agent.identity.name }}</div>
-                </div>
-                <i v-if="agent.id === selectedAgent.id" class="bi bi-check text-green-500 ml-2"></i>
-              </button>
-            </div>
-          </div>
+          <!-- 手機版退出按鈕 -->
+          <button 
+            v-if="currentView === 'chat'" 
+            @click="currentView = 'chats'"
+            class="lg:hidden p-2 hover:bg-[#252525] rounded-lg transition-colors"
+            title="返回"
+          >
+            <i class="bi bi-arrow-left text-lg"></i>
+          </button>
           
-          <!-- Session 選擇 -->
-          <div class="relative flex-1 max-w-xs" v-if="currentView === 'chat'">
-            <button 
-              @click="showSessionDropdown = !showSessionDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg px-3 py-2 flex items-center gap-2 transition-colors text-sm"
-            >
-              <i class="bi bi-chat-dots text-gray-400"></i>
-              <span class="flex-1 text-left truncate">{{ currentSessionName }}</span>
-              <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
-            </button>
-            
-            <!-- Session Dropdown -->
-            <div v-if="showSessionDropdown" class="session-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <div class="p-2">
-                <button
-                  @click="createNewSession"
-                  class="w-full px-3 py-2 text-sm text-blue-400 hover:bg-[#2a2a2a] rounded flex items-center gap-2"
-                >
-                  <i class="bi bi-plus-circle"></i>
-                  <span>新對話</span>
-                </button>
-              </div>
-              <div class="max-h-48 overflow-y-auto">
-                <button
-                  v-for="session in sessions"
-                  :key="session.id"
-                  @click="switchSession(session)"
-                  class="w-full px-4 py-2 text-sm hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
-                  :class="{'bg-[#252525]': session.id === currentSession}"
-                >
-                  <i class="bi bi-chat-dots text-gray-500"></i>
-                  <div class="flex-1 text-left overflow-hidden">
-                    <div class="truncate text-xs">{{ session.name }}</div>
-                  </div>
-                  <i v-if="session.id === currentSession" class="bi bi-check text-green-500"></i>
-                </button>
-              </div>
-            </div>
+          <!-- 當前 Agent 顯示 (唯讀) -->
+          <div v-if="currentView === 'chat'" class="flex items-center gap-2 bg-[#1f1f1f] rounded-lg px-3 py-2">
+            <span class="text-lg">{{ selectedAgent.identity.emoji }}</span>
+            <span class="text-sm font-medium">{{ selectedAgent.identity.name }}</span>
           </div>
           
           <!-- 視圖標題 (非對話模式) -->
@@ -674,7 +543,7 @@
         </div>
         
         <!-- 管理頁面內容 (主區域) -->
-        <div v-if="currentView === 'manage'" class="flex-1 overflow-y-auto p-4">
+        <div v-if="currentView === 'manage'" class="view-content flex-1 overflow-y-auto p-4">
           <!-- 列表視圖 -->
           <div v-if="!detailView">
             <!-- 狀態卡片 -->
@@ -712,14 +581,14 @@
                   v-for="agent in manageAgents" 
                   :key="agent.id"
                   @click="showAgentDetail(agent)"
-                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors text-left"
+                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors text-left md:flex-nowrap flex-wrap"
                 >
-                  <span class="text-2xl">{{ agent.emoji }}</span>
-                  <div class="flex-1">
-                    <div class="font-medium">{{ agent.name }}</div>
-                    <div class="text-xs text-gray-500">{{ agent.description || agent.id }}</div>
+                  <span class="text-2xl flex-shrink-0">{{ agent.emoji }}</span>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium truncate">{{ agent.name }}</div>
+                    <div class="text-xs text-gray-500 truncate">{{ agent.description || agent.id }}</div>
                   </div>
-                  <i class="bi bi-chevron-right text-gray-500"></i>
+                  <i class="bi bi-chevron-right text-gray-500 flex-shrink-0"></i>
                 </button>
               </div>
             </div>
@@ -734,9 +603,9 @@
                 <div 
                   v-for="session in manageSessions" 
                   :key="session.id"
-                  class="bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors"
+                  class="bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors md:flex-nowrap flex-wrap"
                 >
-                  <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0"
                     :class="{
                       'bg-blue-500/20': session.source === 'telegram',
                       'bg-indigo-500/20': session.source === 'discord', 
@@ -753,13 +622,13 @@
                     <span v-else-if="session.source === 'main'">🏠</span>
                     <span v-else>❓</span>
                   </div>
-                  <div class="flex-1 min-w-0">
+                  <div class="flex-1 min-w-0 w-full md:w-auto">
                     <div class="font-medium truncate">{{ session.id }}</div>
-                    <div class="text-xs text-gray-500">
+                    <div class="text-xs text-gray-500 truncate">
                       {{ session.agentId }} · {{ session.age }} · {{ session.model }}
                     </div>
                   </div>
-                  <div class="text-right">
+                  <div class="text-right flex-shrink-0">
                     <div class="text-sm font-medium">{{ session.tokens?.toLocaleString() || 0 }}</div>
                     <div class="text-xs text-gray-500">{{ session.contextPercent }}%</div>
                   </div>
@@ -775,20 +644,20 @@
                   v-for="(info, name) in manageChannels" 
                   :key="name"
                   @click="showChannelDetail(name, info)"
-                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors text-left"
+                  class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors text-left md:flex-nowrap flex-wrap"
                 >
-                  <div class="w-10 h-10 bg-[#059669] rounded-lg flex items-center justify-center text-xl">📱</div>
-                  <div class="flex-1">
+                  <div class="w-10 h-10 bg-[#059669] rounded-lg flex items-center justify-center text-xl flex-shrink-0">📱</div>
+                  <div class="flex-1 min-w-0 w-full md:w-auto">
                     <div class="font-medium capitalize">{{ name }}</div>
                     <div class="text-xs text-gray-500">{{ info.accountCount || 0 }} accounts</div>
                   </div>
                   <span 
-                    class="text-xs px-2 py-1 rounded"
+                    class="text-xs px-2 py-1 rounded flex-shrink-0"
                     :class="info.enabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'"
                   >
                     {{ info.enabled ? 'Enabled' : 'Disabled' }}
                   </span>
-                  <i class="bi bi-chevron-right text-gray-500"></i>
+                  <i class="bi bi-chevron-right text-gray-500 flex-shrink-0"></i>
                 </button>
               </div>
             </div>
@@ -797,13 +666,13 @@
             <div>
               <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Gateway</h3>
               <div class="bg-[#1f1f1f] rounded-lg p-3 border text-sm">
-                <div class="flex justify-between py-1">
+                <div class="flex flex-col md:flex-row md:justify-between py-1 gap-1">
                   <span class="text-gray-400">HTTP Port</span>
                   <span>{{ gatewayInfo.port }}</span>
                 </div>
-                <div class="flex justify-between py-1">
+                <div class="flex flex-col md:flex-row md:justify-between py-1 gap-1">
                   <span class="text-gray-400">Config Path</span>
-                  <span class="text-gray-500 truncate ml-2">~/.openclaw/openclaw.json</span>
+                  <span class="text-gray-500 truncate">~/.openclaw/openclaw.json</span>
                 </div>
               </div>
             </div>
@@ -822,26 +691,26 @@
             
             <!-- Agent 詳情 -->
             <div v-if="detailView.type === 'agent'" class="space-y-4">
-              <div class="bg-[#1f1f1f] rounded-lg p-6 border text-center">
-                <div class="text-6xl mb-4">{{ detailView.data.emoji }}</div>
-                <h2 class="text-2xl font-bold">{{ detailView.data.name }}</h2>
-                <p class="text-gray-500 mt-2">{{ detailView.data.id }}</p>
+              <div class="bg-[#1f1f1f] rounded-lg p-4 md:p-6 border text-center">
+                <div class="text-4xl md:text-6xl mb-4">{{ detailView.data.emoji }}</div>
+                <h2 class="text-xl md:text-2xl font-bold">{{ detailView.data.name }}</h2>
+                <p class="text-gray-500 mt-2 text-sm truncate">{{ detailView.data.id }}</p>
               </div>
               
               <div class="bg-[#1f1f1f] rounded-lg p-4 border">
                 <h3 class="text-xs text-gray-500 uppercase mb-3">配置</h3>
                 <div class="space-y-2 text-sm">
-                  <div class="flex justify-between">
+                  <div class="flex flex-col md:flex-row md:justify-between gap-1">
                     <span class="text-gray-400">ID</span>
-                    <span>{{ detailView.detail?.id }}</span>
+                    <span class="truncate">{{ detailView.detail?.id }}</span>
                   </div>
-                  <div class="flex justify-between">
+                  <div class="flex flex-col md:flex-row md:justify-between gap-1">
                     <span class="text-gray-400">Workspace</span>
-                    <span class="text-gray-500 text-xs">{{ detailView.detail?.workspace?.split('/').pop() }}</span>
+                    <span class="text-gray-500 text-xs truncate">{{ detailView.detail?.workspace?.split('/').pop() }}</span>
                   </div>
-                  <div v-if="detailView.detail?.model?.primary" class="flex justify-between">
+                  <div v-if="detailView.detail?.model?.primary" class="flex flex-col md:flex-row md:justify-between gap-1">
                     <span class="text-gray-400">Model</span>
-                    <span class="text-xs">{{ detailView.detail.model.primary }}</span>
+                    <span class="text-xs truncate">{{ detailView.detail.model.primary }}</span>
                   </div>
                 </div>
               </div>
@@ -862,14 +731,14 @@
             
             <!-- Channel 詳情 -->
             <div v-else-if="detailView.type === 'channel'" class="space-y-4">
-              <div class="bg-[#1f1f1f] rounded-lg p-6 border text-center">
-                <div class="text-6xl mb-4">📱</div>
-                <h2 class="text-2xl font-bold capitalize">{{ detailView.name }}</h2>
+              <div class="bg-[#1f1f1f] rounded-lg p-4 md:p-6 border text-center">
+                <div class="text-4xl md:text-6xl mb-4">📱</div>
+                <h2 class="text-xl md:text-2xl font-bold capitalize">{{ detailView.name }}</h2>
                 <p class="text-gray-500 mt-2">{{ detailView.data.accountCount }} accounts</p>
               </div>
               <div class="bg-[#1f1f1f] rounded-lg p-4 border">
                 <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full" :class="detailView.data.enabled ? 'bg-green-500' : 'bg-red-500'"></span>
+                  <span class="w-3 h-3 rounded-full flex-shrink-0" :class="detailView.data.enabled ? 'bg-green-500' : 'bg-red-500'"></span>
                   <span>{{ detailView.data.enabled ? '已啟用' : '已停用' }}</span>
                 </div>
               </div>
@@ -878,7 +747,7 @@
         </div>
         
         <!-- 留言板內容 -->
-        <div v-if="currentView === 'board'" class="flex-1 overflow-y-auto p-4 md:p-6" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-gray-50'">
+        <div v-if="currentView === 'board'" class="view-content flex-1 overflow-y-auto p-4 md:p-6" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-gray-50'">
           <div class="max-w-4xl mx-auto">
             <!-- 頂部標題列 -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -966,7 +835,7 @@
         </div>
         
         <!-- 排程內容 - 優化版雙欄佈局 -->
-        <div v-if="currentView === 'schedule'" class="flex-1 overflow-y-auto p-4" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-white'">
+        <div v-if="currentView === 'schedule'" class="view-content flex-1 overflow-y-auto p-4" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-white'">
           <!-- 載入中 -->
           <div v-if="scheduleLoading" class="flex items-center justify-center h-64">
             <div class="text-center" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
@@ -1171,8 +1040,63 @@
           </div>
         </div>
         
+        <!-- 聊天列表內容 -->
+        <div v-if="currentView === 'chats'" class="view-content flex-1 overflow-y-auto p-4" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-gray-50'">
+          <div class="max-w-2xl mx-auto">
+            <!-- 頂部標題 -->
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold" :class="isDarkMode ? 'text-white' : 'text-gray-900'">
+                聊天
+              </h2>
+              <button @click="showNewChatModal = true" class="p-2 rounded-lg hover:bg-[#252525]">
+                <i class="bi bi-plus-circle text-xl text-blue-500"></i>
+              </button>
+            </div>
+            
+            <!-- 對話列表 -->
+            <div class="space-y-2">
+              <button 
+                v-for="session in sessions" 
+                :key="session.id"
+                @click="switchSession(session); currentView = 'chat'"
+                class="w-full p-4 flex items-center gap-3 rounded-xl transition-colors text-left"
+                :class="session.id === currentSession ? (isDarkMode ? 'bg-[#252525]' : 'bg-blue-50') : (isDarkMode ? 'bg-[#1f1f1f] hover:bg-[#252525]' : 'bg-white hover:bg-gray-100')"
+              >
+                <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0"
+                  :class="isDarkMode ? 'bg-[#333]' : 'bg-gray-200'"
+                >
+                  <span v-if="session.source === 'telegram'">📱</span>
+                  <span v-else-if="session.source === 'discord'">💬</span>
+                  <span v-else-if="session.source === 'webchat'">🌐</span>
+                  <span v-else-if="session.source === 'cron'">⏰</span>
+                  <span v-else>💬</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium truncate">{{ session.name }}</div>
+                  <div class="text-sm truncate" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                    <span v-if="agents.find(a => a.id === session.agentId)">{{ agents.find(a => a.id === session.agentId).identity.emoji }} {{ agents.find(a => a.id === session.agentId).identity.name }}</span>
+                    <span v-else>{{ session.preview || '尚無訊息' }}</span>
+                  </div>
+                </div>
+                <div class="text-xs flex-shrink-0" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  {{ session.age }}
+                </div>
+              </button>
+              
+              <!-- 無對話時 -->
+              <div v-if="sessions.length === 0" class="text-center py-12 text-gray-500">
+                <i class="bi bi-chat-dots text-4xl mb-4"></i>
+                <p>尚無對話</p>
+                <button @click="showNewChatModal = true" class="mt-4 px-4 py-2 bg-[#2563eb] text-white rounded-lg">
+                  開始新對話
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <!-- Backlog 看板內容 -->
-        <div v-if="currentView === 'backlog'" class="flex-1 overflow-y-auto p-4" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-white'">
+        <div v-if="currentView === 'backlog'" class="view-content flex-1 overflow-y-auto p-4" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-white'">
           <!-- 頂部標題列 -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
@@ -1311,7 +1235,7 @@
         </div>
         
         <!-- 對話區域 -->
-        <div v-if="currentView === 'chat'" class="flex-1 flex flex-col overflow-hidden">
+        <div v-if="currentView === 'chat'" class="chat-area flex-1 flex flex-col overflow-hidden">
           <!-- 訊息列表 -->
           <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
           <!-- 歡迎訊息 -->
@@ -1386,7 +1310,7 @@
         </div>
         
         <!-- 輸入區 -->
-        <div class="p-4">
+        <div class="p-4 lg:pb-4 pb-20">
           <!-- 圖片預覽 -->
           <div v-if="uploadedImages.length > 0" class="mb-2 flex gap-2 flex-wrap">
             <div v-for="(img, idx) in uploadedImages" :key="idx" class="relative">
@@ -1435,6 +1359,147 @@
           </form>
         </div>
       </main>
+      
+      <!-- 新建對話 Modal -->
+      <div v-if="showNewChatModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1f1f1f] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+          <div class="p-4 border-b border-[#333] flex items-center justify-between">
+            <h3 class="font-bold text-lg">新對話</h3>
+            <button @click="showNewChatModal = false" class="p-2 hover:bg-[#252525] rounded-lg">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-gray-400 mb-4">選擇一個 Agent 開始新對話</p>
+            <div class="space-y-2 max-h-[60vh] overflow-y-auto">
+              <button
+                v-for="agent in agents"
+                :key="agent.id"
+                @click="createNewSession(agent)"
+                class="w-full p-4 rounded-xl flex items-center gap-3 transition-colors text-left"
+                :class="isDarkMode ? 'bg-[#252525] hover:bg-[#333]' : 'bg-gray-100 hover:bg-gray-200'"
+              >
+                <span class="text-2xl">{{ agent.identity.emoji }}</span>
+                <div class="flex-1">
+                  <div class="font-medium">{{ agent.identity.name }}</div>
+                  <div class="text-xs text-gray-500">{{ agent.identity.theme }}</div>
+                </div>
+                <i class="bi bi-chevron-right text-gray-500"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 手機版底部導航欄 (微信風格) -->
+      <!-- 手機版底部導航 (僅在非對話頁面顯示) -->
+      <nav v-if="currentView !== 'chat'" class="lg:hidden fixed bottom-0 left-0 right-0 z-[100] border-t border-[#333] flex" :class="isDarkMode ? 'bg-[#161616]' : 'bg-white'" style="padding-bottom: env(safe-area-inset-bottom, 0);">
+        <button @click="currentView = 'chats'" class="flex-1 py-3 flex flex-col items-center gap-0.5" :class="currentView === 'chats' ? 'text-blue-500' : 'text-gray-500'">
+          <i class="bi bi-chat-dots text-xl"></i><span class="text-[10px]">聊天</span>
+        </button>
+        <button @click="currentView = 'board'" class="flex-1 py-3 flex flex-col items-center gap-0.5" :class="currentView === 'board' ? 'text-blue-500' : 'text-gray-500'">
+          <i class="bi bi-chat-square-text text-xl"></i><span class="text-[10px]">留言</span>
+        </button>
+        <button @click="currentView = 'schedule'" class="flex-1 py-3 flex flex-col items-center gap-0.5" :class="currentView === 'schedule' ? 'text-blue-500' : 'text-gray-500'">
+          <i class="bi bi-clock text-xl"></i><span class="text-[10px]">排程</span>
+        </button>
+        <button @click="currentView = 'manage'" class="flex-1 py-3 flex flex-col items-center gap-0.5" :class="currentView === 'manage' ? 'text-blue-500' : 'text-gray-500'">
+          <i class="bi bi-gear text-xl"></i><span class="text-[10px]">管理</span>
+        </button>
+      </nav>
+      
+      <!-- 手機版 Session 選擇 Sheet -->
+      <div v-if="showMobileSessionSheet" @click="showMobileSessionSheet = false" class="lg:hidden fixed inset-0 bg-black/50 z-40"></div>
+      <div v-if="showMobileSessionSheet" class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1f1f1f] rounded-t-3xl shadow-2xl max-h-[70vh] overflow-hidden">
+        <div class="flex justify-center pt-3"><div class="w-10 h-1 bg-gray-600 rounded-full"></div></div>
+        <div class="px-4 py-2 flex items-center justify-between border-b border-[#333]">
+          <h3 class="text-sm font-medium">選擇對話</h3>
+          <button @click="showMobileSessionSheet = false" class="p-2 text-gray-400 hover:text-white">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="overflow-y-auto max-h-[60vh]">
+          <!-- 新建對話 -->
+          <button @click="showMobileSessionSheet = false; showNewChatModal = true" class="w-full p-4 flex items-center gap-3 hover:bg-[#252525] border-b border-[#333]">
+            <div class="w-10 h-10 rounded-full bg-[#2563eb] flex items-center justify-center text-white">
+              <i class="bi bi-plus"></i>
+            </div>
+            <span class="font-medium">新對話</span>
+          </button>
+          <!-- Session 列表 -->
+          <button 
+            v-for="session in sessions" 
+            :key="session.id"
+            @click="switchSession(session); showMobileSessionSheet = false; currentView = 'chat'"
+            class="w-full p-4 flex items-center gap-3 hover:bg-[#252525] border-b border-[#333]"
+            :class="session.id === currentSession ? 'bg-[#252525]' : ''"
+          >
+            <div class="w-10 h-10 rounded-full bg-[#333] flex items-center justify-center text-lg">
+              <span v-if="session.source === 'telegram'">📱</span>
+              <span v-else-if="session.source === 'discord'">💬</span>
+              <span v-else-if="session.source === 'webchat'">🌐</span>
+              <span v-else-if="session.source === 'cron'">⏰</span>
+              <span v-else>💬</span>
+            </div>
+            <div class="flex-1 min-w-0 text-left">
+              <div class="font-medium truncate">{{ session.name }}</div>
+              <div class="text-xs text-gray-500 truncate">
+                <span v-if="agents.find(a => a.id === session.agentId)">{{ agents.find(a => a.id === session.agentId).identity.emoji }} {{ agents.find(a => a.id === session.agentId).identity.name }}</span>
+                <span v-else>{{ session.preview || '尚無訊息' }}</span>
+              </div>
+            </div>
+            <i v-if="session.id === currentSession" class="bi bi-check-circle text-blue-500"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- 手機版更多選項彈窗 -->
+      <div v-if="showMobileMenu" @click="showMobileMenu = false" class="lg:hidden fixed inset-0 bg-black/50 z-40"></div>
+      <div v-if="showMobileMenu" class="lg:hidden fixed bottom-20 left-4 right-4 z-50 bg-[#1f1f1f] rounded-2xl shadow-2xl overflow-hidden">
+        <!-- 關閉按鈕 -->
+        <button @click="showMobileMenu = false" class="absolute top-2 right-2 p-2 text-gray-400 hover:text-white">
+          <i class="bi bi-x-lg"></i>
+        </button>
+        <!-- 主題 -->
+        <button @click="toggleTheme(); showMobileMenu = false" class="w-full flex items-center gap-3 p-4 hover:bg-[#252525] border-b border-[#333]">
+          <i class="bi text-lg" :class="isDarkMode ? 'bi-sun text-yellow-400' : 'bi-moon text-gray-400'"></i>
+          <span class="flex-1 text-left">{{ isDarkMode ? '淺色模式' : '深色模式' }}</span>
+        </button>
+        <!-- 清空對話 -->
+        <button v-if="currentView === 'chat'" @click="clearChat(); showMobileMenu = false" class="w-full flex items-center gap-3 p-4 hover:bg-red-500/10">
+          <i class="bi bi-trash text-lg text-red-400"></i>
+          <span class="flex-1 text-left text-red-400">清空對話</span>
+        </button>
+      </div>
+      
+      <!-- 手機版 Agent 選擇 Sheet -->
+      <div v-if="showMobileAgentSheet" @click="showMobileAgentSheet = false" class="lg:hidden fixed inset-0 bg-black/50 z-50"></div>
+      <div v-if="showMobileAgentSheet" class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1f1f1f] rounded-t-3xl shadow-2xl max-h-[70vh] overflow-hidden">
+        <div class="flex justify-center pt-3"><div class="w-10 h-1 bg-gray-600 rounded-full"></div></div>
+        <div class="px-4 pb-4 overflow-y-auto">
+          <h3 class="text-sm text-gray-500 mb-3">選擇 Agent</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button v-for="agent in agents" :key="agent.id" @click="selectAgent(agent); showMobileAgentSheet = false" class="p-3 flex items-center gap-3 rounded-xl" :class="agent.id === selectedAgent.id ? 'bg-[#2563eb] text-white' : 'bg-[#252525] hover:bg-[#333]'">
+              <span class="text-xl">{{ agent.identity.emoji }}</span>
+              <span class="text-sm font-medium">{{ agent.identity.name }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 手機版 Model 選擇 Sheet -->
+      <div v-if="showMobileModelSheet" @click="showMobileModelSheet = false" class="lg:hidden fixed inset-0 bg-black/50 z-50"></div>
+      <div v-if="showMobileModelSheet" class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1f1f1f] rounded-t-3xl shadow-2xl max-h-[60vh] overflow-hidden">
+        <div class="flex justify-center pt-3"><div class="w-10 h-1 bg-gray-600 rounded-full"></div></div>
+        <div class="px-4 pb-4 overflow-y-auto">
+          <h3 class="text-sm text-gray-500 mb-3">選擇模型</h3>
+          <div class="space-y-2">
+            <button v-for="model in models" :key="model.id" @click="selectedModel = model.id; showMobileModelSheet = false" class="w-full p-3 flex items-center gap-3 rounded-xl" :class="model.id === selectedModel ? 'bg-[#2563eb] text-white' : 'bg-[#252525] hover:bg-[#333]'">
+              <span class="text-sm">{{ model.name }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1479,6 +1544,11 @@
         const showAgentDropdown = ref(false);
         const showModelDropdown = ref(false);
         const showMobileMenu = ref(false);
+        const showMobileAgentSheet = ref(false);
+        const showMobileModelSheet = ref(false);
+        const showMobileSessionSheet = ref(false);
+        const showMobileFileSheet = ref(false);
+        const showNewChatModal = ref(false);
         const toasts = ref([]);
         
         // Toast 通知
@@ -2362,7 +2432,12 @@
         });
         
         // 創建新對話
-        const createNewSession = () => {
+        const createNewSession = (agent = null) => {
+          // 如果有傳入 agent，切换到该 agent
+          if (agent) {
+            selectAgent(agent);
+          }
+          
           // 先儲存當前 session 的訊息
           const currentMsgs = messages.value;
           if (currentMsgs.length > 0) {
@@ -2384,6 +2459,7 @@
           messages.value = [];
           saveSessions();
           showSessionDropdown.value = false;
+          showNewChatModal.value = false;
         };
         
         // 切換對話
@@ -2492,8 +2568,13 @@
           isLoading,
           showAgentDropdown,
           showModelDropdown,
-          selectedModelName,
           showMobileMenu,
+          showMobileAgentSheet,
+          showMobileModelSheet,
+          showMobileSessionSheet,
+          showMobileFileSheet,
+          showNewChatModal,
+          selectedModelName,
           toasts,
           showToast,
           showSessionDropdown,

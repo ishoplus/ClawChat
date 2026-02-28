@@ -4,7 +4,7 @@
 
 ## 功能
 
-- 🤖 多 Agent 切換
+- 🤖 多 Agent 支援 (新建對話時選擇)
 - 💬 會話管理 (Session 持久化)
 - 🖼️ 圖片上傳支援
 - 📡 SSE 流式輸出
@@ -13,6 +13,7 @@
 - ⏰ 排程管理
 - 📝 留言板 / Backlog 看板
 - 🔧 檔案瀏覽器
+- 📱 響應式設計 (桌面/手機)
 
 ## 截圖
 
@@ -71,12 +72,19 @@ PORT=8094 python server.py
 
 ## 頁面功能
 
-### 對話頁面
-- 選擇不同 Agent 進行對話
-- 切換會話 (Session)
-- 選擇模型 (MiniMax, GLM, Gemini 等)
-- 圖片上傳
-- 檔案瀏覽器
+### 對話頁面 (桌面版)
+- 左側：Session 列表 + 新建對話
+- 中間：對話區域
+- 右側：Workspace 檔案瀏覽器
+
+### 對話頁面 (手機版)
+- 聊天列表頁面
+- 對話頁面 (全螢幕)
+- 底部導航：聊天、留言、排程、管理
+
+### 新建對話流程
+- 點擊「+」選擇 Agent
+- 選擇後自動創建新對話並切換
 
 ### 管理頁面
 - Gateway 狀態監控
@@ -131,7 +139,7 @@ ngrok http 8093
 
 - **前端**: Vue.js 3 (CDN)
 - **後端**: Python 3 + http.server
-- **協議**: SSE (Server-Sed Events)
+- **協議**: SSE (Server-Sent Events)
 
 ## License
 
