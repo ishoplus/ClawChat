@@ -334,6 +334,7 @@
                 <span v-if="agents.find(a => a.id === session.agentId)">{{ agents.find(a => a.id === session.agentId).identity.emoji }} {{ agents.find(a => a.id === session.agentId).identity.name }}</span>
                 <span v-else>{{ session.preview || '尚無訊息' }}</span>
               </div>
+              <div class="text-[10px] text-gray-600 truncate">{{ session.id }}</div>
             </div>
           </button>
           
@@ -1077,6 +1078,7 @@
                     <span v-if="agents.find(a => a.id === session.agentId)">{{ agents.find(a => a.id === session.agentId).identity.emoji }} {{ agents.find(a => a.id === session.agentId).identity.name }}</span>
                     <span v-else>{{ session.preview || '尚無訊息' }}</span>
                   </div>
+                  <div class="text-xs text-gray-600 truncate">{{ session.id }}</div>
                 </div>
                 <div class="text-xs flex-shrink-0" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
                   {{ session.age }}
@@ -1447,6 +1449,7 @@
                 <span v-if="agents.find(a => a.id === session.agentId)">{{ agents.find(a => a.id === session.agentId).identity.emoji }} {{ agents.find(a => a.id === session.agentId).identity.name }}</span>
                 <span v-else>{{ session.preview || '尚無訊息' }}</span>
               </div>
+              <div class="text-xs text-gray-600 truncate">{{ session.id }}</div>
             </div>
             <i v-if="session.id === currentSession" class="bi bi-check-circle text-blue-500"></i>
           </button>
