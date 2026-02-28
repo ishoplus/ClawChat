@@ -79,10 +79,12 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=SCRIPT_DIR, **kwargs)
         # 取得請求的 Origin
-        self._request_origin = self.headers.get('Origin', '')
+        self._request_origin = ''
     
     def end_headers(self):
         # 動態設定 CORS Origin
+        if not self._request_origin:
+            self._request_origin = self.headers.get('Origin', '')
         allowed_origin = get_allowed_origin(self._request_origin)
         if allowed_origin:
             self.send_header('Access-Control-Allow-Origin', allowed_origin)
@@ -95,6 +97,9 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
     
     def do_GET(self):
+        # 每次請求更新 Origin
+        self._request_origin = self.headers.get('Origin', '')
+        
         # 敏感端點需要 API Key 認證
         sensitive_paths = ['/api/channels', '/api/config', '/api/board', '/api/cron', '/api/backlog']
         needs_auth = any(self.path.startswith(p) for p in sensitive_paths)
@@ -111,6 +116,8 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(self.get_channels())
         elif self.path == '/api/config':
             self.send_json_response(self.get_config())
+        elif self.path == '/api/sessions':
+            self.send_json_response(self.get_sessions())
         elif self.path.startswith('/api/agent/'):
             parts = self.path.split('/')
             # parts: ['', 'api', 'agent', '<agent_id>', 'files', ...]
@@ -444,6 +451,66 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return {"agents": [], "error": str(e)}
         return get_cached('agents', fetch, ttl=60)
     
+    def get_sessions(self):
+        """取得 OpenClaw Sessions"""
+        def fetch():
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ['openclaw', 'sessions', '--json'],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                if result.returncode == 0:
+                    data = json.loads(result.stdout)
+                    # 簡化 sessions 數據
+                    sessions = []
+                    for s in data.get('sessions', []):
+                        # 解析 key 取得來源
+                        key = s.get('key', '')
+                        source = 'unknown'
+                        if 'telegram' in key:
+                            source = 'telegram'
+                        elif 'discord' in key:
+                            source = 'discord'
+                        elif 'webchat' in key:
+                            source = 'webchat'
+                        elif 'cron' in key:
+                            source = 'cron'
+                        elif 'main_session' in key:
+                            source = 'main'
+                        
+                        # 格式化時間
+                        age_ms = s.get('ageMs', 0)
+                        if age_ms < 60000:
+                            age = f"{age_ms//1000}秒前"
+                        elif age_ms < 3600000:
+                            age = f"{age_ms//60000}分前"
+                        elif age_ms < 86400000:
+                            age = f"{age_ms//3600000}小時前"
+                        else:
+                            age = f"{age_ms//86400000}天前"
+                        
+                        sessions.append({
+                            "id": s.get('sessionId', ''),
+                            "key": key,
+                            "agentId": s.get('agentId', ''),
+                            "source": source,
+                            "age": age,
+                            "ageMs": age_ms,
+                            "model": s.get('model', ''),
+                            "tokens": s.get('totalTokens', 0),
+                            "contextPercent": round(((s.get('totalTokens') or 0) / (s.get('contextTokens') or 200000)) * 100, 1),
+                            "updatedAt": s.get('updatedAt', 0),
+                        })
+                    return {"sessions": sessions, "count": len(sessions)}
+                else:
+                    return {"sessions": [], "error": result.stderr}
+            except Exception as e:
+                return {"sessions": [], "error": str(e)}
+        return get_cached('sessions', fetch, ttl=30)
+    
     def get_channels(self):
         """取得 Channels 狀態"""
         def fetch():
@@ -676,6 +743,9 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             return {"error": str(e)}
     
     def do_POST(self):
+        # 每次請求更新 Origin
+        self._request_origin = self.headers.get('Origin', '')
+        
         if self.path == '/api/chat':
             # Proxy to Gateway with SSE support
             content_length = int(self.headers.get('Content-Length', 0))

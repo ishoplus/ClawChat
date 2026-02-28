@@ -275,176 +275,80 @@
 
     <div class="flex h-full">
       
-      <!-- 側邊欄：Agent 選擇器 -->
-      <aside class="w-72 bg-[#161616] flex flex-col hidden md:flex">
-        <!-- Logo + 頁籤切換 -->
-        <div class="p-4">
-          <div class="flex gap-2 mb-3">
-            <button 
-              @click="currentView = 'chat'"
-              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="currentView === 'chat' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
-            >
-              <i class="bi bi-chat-dots me-1"></i> 對話
-            </button>
-            <button 
-              @click="currentView = 'manage'"
-              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="currentView === 'manage' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
-            >
-              <i class="bi bi-gear me-1"></i> 管理
-            </button>
-            <button 
-              @click="currentView = 'board'"
-              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="currentView === 'board' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
-            >
-              <i class="bi bi-chat-square-text me-1"></i> 留言版
-            </button>
-            <button 
-              @click="currentView = 'schedule'"
-              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="currentView === 'schedule' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
-            >
-              <i class="bi bi-clock me-1"></i> 排程
-            </button>
-            <button 
-              @click="currentView = 'backlog'"
-              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="currentView === 'backlog' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
-            >
-              <i class="bi bi-kanban me-1"></i> 看板
-            </button>
-            <!-- 主題切換 -->
-            <button 
-              @click="toggleTheme"
-              class="p-2 rounded-lg transition-colors"
-              :class="isDarkMode ? 'bg-[#1f1f1f] text-yellow-400 hover:bg-[#252525]' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
-              :title="isDarkMode ? '切換到白天模式' : '切換到夜晚模式'"
-            >
-              <i class="bi" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
-            </button>
-          </div>
-          <h1 v-if="currentView === 'chat'" class="text-xl font-bold flex items-center gap-2" :style="{ color: isDarkMode ? '#fff' : '#111827' }">
+      <!-- 側邊欄：簡化導航 -->
+      <aside class="w-20 bg-[#161616] flex flex-col hidden md:flex border-r border-[#333]">
+        <!-- Logo -->
+        <div class="p-3 border-b border-[#333]">
+          <div class="flex flex-col items-center gap-1">
             <span class="text-2xl">💬</span>
-            <span>ClawChat</span>
-          </h1>
+          </div>
         </div>
         
+        <!-- 導航圖標 -->
+        <div class="flex-1 flex flex-col items-center py-3 gap-1">
+          <button 
+            @click="currentView = 'chat'"
+            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
+            :class="currentView === 'chat' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
+            title="對話"
+          >
+            <i class="bi bi-chat-dots text-lg"></i>
+            <span class="text-[10px]">對話</span>
+          </button>
+          <button 
+            @click="currentView = 'manage'"
+            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
+            :class="currentView === 'manage' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
+            title="管理"
+          >
+            <i class="bi bi-gear text-lg"></i>
+            <span class="text-[10px]">管理</span>
+          </button>
+          <button 
+            @click="currentView = 'board'"
+            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
+            :class="currentView === 'board' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
+            title="留言版"
+          >
+            <i class="bi bi-chat-square-text text-lg"></i>
+            <span class="text-[10px]">留言版</span>
+          </button>
+          <button 
+            @click="currentView = 'schedule'"
+            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
+            :class="currentView === 'schedule' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
+            title="排程"
+          >
+            <i class="bi bi-clock text-lg"></i>
+            <span class="text-[10px]">排程</span>
+          </button>
+          <button 
+            @click="currentView = 'backlog'"
+            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5"
+            :class="currentView === 'backlog' ? 'bg-[#2563eb] text-white' : 'text-gray-400 hover:bg-[#252525]'"
+            title="看板"
+          >
+            <i class="bi bi-kanban text-lg"></i>
+            <span class="text-[10px]">看板</span>
+          </button>
+        </div>
+        
+        <!-- 主題切換 -->
+        <div class="p-3 border-t border-[#333]">
+          <button 
+            @click="toggleTheme"
+            class="p-2.5 rounded-lg transition-colors w-16 flex flex-col items-center gap-0.5 mx-auto"
+            :class="isDarkMode ? 'text-yellow-400 hover:bg-[#252525]' : 'text-gray-700 hover:bg-gray-200'"
+            :title="isDarkMode ? '切換到白天模式' : '切換到夜晚模式'"
+          >
+            <i class="bi text-lg" :class="isDarkMode ? 'bi-sun' : 'bi-moon'"></i>
+            <span class="text-[10px]" :class="isDarkMode ? 'text-yellow-400' : 'text-gray-700'">主題</span>
+          </button>
+        </div>
+      </aside>
 
-        
-        <!-- Agent 選擇 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4">
-          <label class="text-xs text-gray-500 uppercase tracking-wider">選擇 Agent</label>
-          <div class="relative mt-2">
-            <button 
-              @click="showAgentDropdown = !showAgentDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
-            >
-              <span class="text-2xl">{{ selectedAgent.identity.emoji }}</span>
-              <div class="text-left flex-1">
-                <div class="font-medium">{{ selectedAgent.identity.name }}</div>
-                <div class="text-xs text-gray-500">{{ selectedAgent.name }}</div>
-              </div>
-              <i class="bi bi-chevron-down text-gray-500"></i>
-            </button>
-            
-            <!-- Dropdown -->
-            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <button
-                v-for="agent in agents"
-                :key="agent.id"
-                @click="selectAgent(agent)"
-                class="w-full p-3 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
-                :class="{'bg-[#252525]': agent.id === selectedAgent.id}"
-              >
-                <span class="text-2xl">{{ agent.identity.emoji }}</span>
-                <div class="text-left flex-1">
-                  <div class="font-medium">{{ agent.identity.name }}</div>
-                  <div class="text-xs text-gray-500">{{ agent.name }}</div>
-                </div>
-                <i v-if="agent.id === selectedAgent.id" class="bi bi-check text-green-500"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Session 控制 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4">
-          <label class="text-xs text-gray-500 uppercase tracking-wider">對話</label>
-          <div class="relative mt-2">
-            <button 
-              @click="showSessionDropdown = !showSessionDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-2 transition-colors text-sm"
-            >
-              <i class="bi bi-chat-dots text-gray-400"></i>
-              <span class="flex-1 text-left truncate">{{ currentSessionName }}</span>
-              <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
-            </button>
-            
-            <!-- Session Dropdown -->
-            <div v-if="showSessionDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <div class="p-3">
-                <button
-                  @click="createNewSession"
-                  class="w-full p-2 text-sm text-blue-400 hover:bg-[#2a2a2a] rounded flex items-center gap-2"
-                >
-                  <i class="bi bi-plus-circle"></i>
-                  <span>新對話</span>
-                </button>
-              </div>
-              <button
-                v-for="session in sessions"
-                :key="session.id"
-                @click="switchSession(session)"
-                class="w-full p-3 text-sm hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
-                :class="{'bg-[#252525]': session.id === currentSession}"
-              >
-                <i class="bi bi-chat-dots text-gray-500"></i>
-                <div class="flex-1 text-left overflow-hidden">
-                  <div class="truncate">{{ session.name }}</div>
-                  <div v-if="session.preview" class="text-xs text-gray-500 truncate">{{ session.preview }}</div>
-                </div>
-                <i v-if="session.id === currentSession" class="bi bi-check text-green-500"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 模型選擇 (僅在對話模式下顯示) -->
-        <div v-if="currentView === 'chat'" class="p-4">
-          <label class="text-xs text-gray-500 uppercase tracking-wider">模型</label>
-          <div class="relative mt-2">
-            <button 
-              @click="showModelDropdown = !showModelDropdown"
-              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 flex items-center gap-3 transition-colors"
-            >
-              <i class="bi bi-cpu text-gray-400"></i>
-              <div class="text-left flex-1">
-                <div class="text-sm">{{ selectedModelName }}</div>
-              </div>
-              <i class="bi bi-chevron-down text-gray-500"></i>
-            </button>
-            
-            <!-- Model Dropdown -->
-            <div v-if="showModelDropdown" class="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
-              <button
-                v-for="model in models"
-                :key="model.id"
-                @click="selectedModel = model.id; showModelDropdown = false"
-                class="w-full p-3 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
-                :class="{'bg-[#252525]': model.id === selectedModel}"
-              >
-                <i class="bi bi-cpu text-gray-400"></i>
-                <div class="text-left flex-1">
-                  <div class="text-sm">{{ model.name }}</div>
-                </div>
-                <i v-if="model.id === selectedModel" class="bi bi-check text-green-500"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-        
+      <!-- 右側邊欄：檔案瀏覽器 -->
+      <aside class="w-64 bg-[#161616] flex flex-col hidden lg:flex border-l border-[#333]">
         <!-- 檔案瀏覽器 (僅在對話模式下顯示) -->
         <div v-if="currentView === 'chat'" class="p-4 flex-1 overflow-hidden flex flex-col">
           <button 
@@ -653,6 +557,122 @@
 
       <!-- 主區域 -->
       <main class="flex-1 flex flex-col">
+        <!-- 頂部工具欄：Agent + Session + Model 選擇器 -->
+        <div class="p-3 border-b border-[#333] flex items-center gap-3">
+          <!-- Agent 選擇 -->
+          <div class="relative" v-if="currentView === 'chat'">
+            <button 
+              @click="showAgentDropdown = !showAgentDropdown"
+              class="bg-[#1f1f1f] hover:bg-[#252525] rounded-lg px-3 py-2 flex items-center gap-2 transition-colors"
+            >
+              <span class="text-lg">{{ selectedAgent.identity.emoji }}</span>
+              <span class="text-sm font-medium">{{ selectedAgent.identity.name }}</span>
+              <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
+            </button>
+            
+            <!-- Agent Dropdown -->
+            <div v-if="showAgentDropdown" class="agent-dropdown absolute top-full left-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
+              <button
+                v-for="agent in agents"
+                :key="agent.id"
+                @click="selectAgent(agent)"
+                class="w-full px-4 py-2 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
+                :class="{'bg-[#252525]': agent.id === selectedAgent.id}"
+              >
+                <span class="text-lg">{{ agent.identity.emoji }}</span>
+                <div class="text-left">
+                  <div class="font-medium text-sm">{{ agent.identity.name }}</div>
+                </div>
+                <i v-if="agent.id === selectedAgent.id" class="bi bi-check text-green-500 ml-2"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Session 選擇 -->
+          <div class="relative flex-1 max-w-xs" v-if="currentView === 'chat'">
+            <button 
+              @click="showSessionDropdown = !showSessionDropdown"
+              class="w-full bg-[#1f1f1f] hover:bg-[#252525] rounded-lg px-3 py-2 flex items-center gap-2 transition-colors text-sm"
+            >
+              <i class="bi bi-chat-dots text-gray-400"></i>
+              <span class="flex-1 text-left truncate">{{ currentSessionName }}</span>
+              <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
+            </button>
+            
+            <!-- Session Dropdown -->
+            <div v-if="showSessionDropdown" class="session-dropdown absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
+              <div class="p-2">
+                <button
+                  @click="createNewSession"
+                  class="w-full px-3 py-2 text-sm text-blue-400 hover:bg-[#2a2a2a] rounded flex items-center gap-2"
+                >
+                  <i class="bi bi-plus-circle"></i>
+                  <span>新對話</span>
+                </button>
+              </div>
+              <div class="max-h-48 overflow-y-auto">
+                <button
+                  v-for="session in sessions"
+                  :key="session.id"
+                  @click="switchSession(session)"
+                  class="w-full px-4 py-2 text-sm hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
+                  :class="{'bg-[#252525]': session.id === currentSession}"
+                >
+                  <i class="bi bi-chat-dots text-gray-500"></i>
+                  <div class="flex-1 text-left overflow-hidden">
+                    <div class="truncate text-xs">{{ session.name }}</div>
+                  </div>
+                  <i v-if="session.id === currentSession" class="bi bi-check text-green-500"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 視圖標題 (非對話模式) -->
+          <div v-if="currentView !== 'chat'" class="flex items-center gap-2">
+            <i class="bi text-lg" :class="{
+              'bi-gear': currentView === 'manage',
+              'bi-chat-square-text': currentView === 'board',
+              'bi-clock': currentView === 'schedule',
+              'bi-kanban': currentView === 'backlog'
+            }"></i>
+            <span class="text-sm font-medium">{{ {
+              'manage': '系統管理',
+              'board': '留言版',
+              'schedule': '排程管理',
+              'backlog': 'Backlog 看板'
+            }[currentView] }}</span>
+          </div>
+          
+          <!-- 模型選擇 (僅對話模式) -->
+          <div class="relative ml-auto" v-if="currentView === 'chat'">
+            <button 
+              @click="showModelDropdown = !showModelDropdown"
+              class="bg-[#1f1f1f] hover:bg-[#252525] rounded-lg px-3 py-2 flex items-center gap-2 transition-colors"
+            >
+              <i class="bi bi-cpu text-gray-400"></i>
+              <span class="text-sm">{{ selectedModelName }}</span>
+              <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
+            </button>
+            
+            <!-- Model Dropdown -->
+            <div v-if="showModelDropdown" class="absolute top-full right-0 mt-1 bg-[#1f1f1f] rounded-lg shadow-xl z-50">
+              <button
+                v-for="model in models"
+                :key="model.id"
+                @click="selectedModel = model.id; showModelDropdown = false"
+                class="w-full px-4 py-2 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors"
+                :class="{'bg-[#252525]': model.id === selectedModel}"
+              >
+                <div class="text-left text-sm">
+                  <div class="font-medium">{{ model.name }}</div>
+                </div>
+                <i v-if="model.id === selectedModel" class="bi bi-check text-green-500 ml-2"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
         <!-- 管理頁面內容 (主區域) -->
         <div v-if="currentView === 'manage'" class="flex-1 overflow-y-auto p-4">
           <!-- 列表視圖 -->
@@ -701,6 +721,49 @@
                   </div>
                   <i class="bi bi-chevron-right text-gray-500"></i>
                 </button>
+              </div>
+            </div>
+            
+            <!-- Sessions 列表 -->
+            <div class="mb-6">
+              <h3 class="text-xs text-gray-500 uppercase tracking-wider mb-3">Sessions ({{ manageSessions.length }})</h3>
+              <div v-if="manageSessionsLoading" class="text-center py-4 text-gray-500">
+                <i class="bi bi-arrow-repeat animate-spin text-xl"></i> 載入中...
+              </div>
+              <div v-else class="space-y-2 max-h-80 overflow-y-auto">
+                <div 
+                  v-for="session in manageSessions" 
+                  :key="session.id"
+                  class="bg-[#1f1f1f] hover:bg-[#252525] rounded-lg p-3 border flex items-center gap-3 transition-colors"
+                >
+                  <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                    :class="{
+                      'bg-blue-500/20': session.source === 'telegram',
+                      'bg-indigo-500/20': session.source === 'discord', 
+                      'bg-green-500/20': session.source === 'webchat',
+                      'bg-yellow-500/20': session.source === 'cron',
+                      'bg-purple-500/20': session.source === 'main',
+                      'bg-gray-500/20': session.source === 'unknown'
+                    }"
+                  >
+                    <span v-if="session.source === 'telegram'">📱</span>
+                    <span v-else-if="session.source === 'discord'">💬</span>
+                    <span v-else-if="session.source === 'webchat'">🌐</span>
+                    <span v-else-if="session.source === 'cron'">⏰</span>
+                    <span v-else-if="session.source === 'main'">🏠</span>
+                    <span v-else>❓</span>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium truncate">{{ session.id }}</div>
+                    <div class="text-xs text-gray-500">
+                      {{ session.agentId }} · {{ session.age }} · {{ session.model }}
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm font-medium">{{ session.tokens?.toLocaleString() || 0 }}</div>
+                    <div class="text-xs text-gray-500">{{ session.contextPercent }}%</div>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -1543,6 +1606,8 @@
         const ngrokUrl = ref(null);
         const manageAgents = ref([]);
         const manageChannels = ref({});
+        const manageSessions = ref([]);
+        const manageSessionsLoading = ref(false);
         const detailView = ref(null);  // 詳情視圖
         const expandedDocs = ref({});   // 展開的文檔
         
@@ -2018,21 +2083,24 @@
         // 取得管理資料
         const fetchManageData = async () => {
           try {
-            const [statusRes, agentsRes, channelsRes] = await Promise.all([
+            const [statusRes, agentsRes, channelsRes, sessionsRes] = await Promise.all([
               fetch('/api/status'),
               fetch('/api/agents'),
-              fetch('/api/channels')
+              fetch('/api/channels'),
+              fetch('/api/sessions')
             ]);
             
             const statusData = await statusRes.json();
             const agentsData = await agentsRes.json();
             const channelsData = await channelsRes.json();
+            const sessionsData = await sessionsRes.json();
             
             systemStatus.value = statusData.status || 'unknown';
             gatewayInfo.value = statusData.gateway || {};
             ngrokUrl.value = statusData.ngrokUrl || null;
             manageAgents.value = agentsData.agents || [];
             manageChannels.value = channelsData.channels || {};
+            manageSessions.value = sessionsData.sessions || [];
           } catch (e) {
             console.error('Failed to fetch manage data:', e);
             systemStatus.value = 'error';
@@ -2345,6 +2413,9 @@
           // 載入主題
           loadTheme();
           
+          // 初始化並載入 sessions
+          initSessions();
+          
           // 載入留言板自動刷新設定
           const savedAutoRefresh = localStorage.getItem('clawchat_board_autorefresh');
           if (savedAutoRefresh !== null) {
@@ -2357,7 +2428,7 @@
           }
           
           // 載入當前 session 的訊息
-          if (currentSession.value) {
+          if (currentSession.value && selectedAgent.value) {
             messages.value = getSessionMessages(currentSession.value, selectedAgent.value.id);
           }
           
@@ -2450,6 +2521,8 @@
           ngrokUrl,
           manageAgents,
           manageChannels,
+          manageSessions,
+          manageSessionsLoading,
           detailView,
           expandedDocs,
           toggleDoc,
