@@ -8,27 +8,101 @@ import json
 import urllib.request
 import urllib.error
 import os
+import time
 
 PORT = int(os.environ.get('PORT', 8093))
 GATEWAY_URL = os.environ.get('GATEWAY_URL', 'http://127.0.0.1:18789')
-GATEWAY_TOKEN = os.environ.get('GATEWAY_TOKEN', '')
 CONFIG_PATH = os.path.expanduser(os.environ.get('OPENCLAW_CONFIG_PATH', '~/.openclaw/openclaw.json'))
+
+# 從配置檔讀取 token
+def get_gateway_token():
+    try:
+        with open(CONFIG_PATH, 'r') as f:
+            config = json.load(f)
+        return config.get('gateway', {}).get('auth', {}).get('token', '')
+    except:
+        return ''
+
+GATEWAY_TOKEN = os.environ.get('GATEWAY_TOKEN', get_gateway_token())
+
+# API Key for authentication (optional - set to protect API endpoints)
+API_KEY = os.environ.get('API_KEY', '')
+# CORS allowed origins (comma-separated, default: localhost only)
+CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'localhost,127.0.0.1').split(',')
+
+def get_allowed_origin(origin=None):
+    """取得允許的 CORS origin"""
+    if not origin:
+        return CORS_ORIGINS[0] if CORS_ORIGINS else '*'
+    # 檢查 origin 是否在允許列表中
+    for allowed in CORS_ORIGINS:
+        if allowed.strip() in origin or allowed == '*':
+            return origin
+    return None
+
+def check_api_key(headers):
+    """檢查 API Key認證"""
+    if not API_KEY:
+        return True  # 未設置 API Key 時，跳過認證
+    auth_header = headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        token = auth_header[7:]
+        if token == API_KEY:
+            return True
+    return False
 
 # Get the directory where this script is located
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# 快取配置
+CACHE_TTL = 30  # 快取有效期（秒）
+_cache = {}
+
+def get_cached(key, fetch_func, ttl=CACHE_TTL):
+    """簡單的記憶體快取"""
+    now = time.time()
+    if key in _cache:
+        data, timestamp = _cache[key]
+        if now - timestamp < ttl:
+            return data
+    # 重新取得
+    data = fetch_func()
+    _cache[key] = (data, now)
+    return data
+
+def clear_cache():
+    """清除快取"""
+    global _cache
+    _cache = {}
+
 class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=SCRIPT_DIR, **kwargs)
+        # 取得請求的 Origin
+        self._request_origin = self.headers.get('Origin', '')
+    
+    def end_headers(self):
+        # 動態設定 CORS Origin
+        allowed_origin = get_allowed_origin(self._request_origin)
+        if allowed_origin:
+            self.send_header('Access-Control-Allow-Origin', allowed_origin)
+        super().end_headers()
     
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         self.end_headers()
     
     def do_GET(self):
+        # 敏感端點需要 API Key 認證
+        sensitive_paths = ['/api/channels', '/api/config', '/api/board', '/api/cron', '/api/backlog']
+        needs_auth = any(self.path.startswith(p) for p in sensitive_paths)
+        
+        if needs_auth and not check_api_key(self.headers):
+            self.send_error(401, 'Unauthorized')
+            return
+        
         if self.path == '/api/status':
             self.send_json_response(self.get_status())
         elif self.path == '/api/agents':
@@ -84,6 +158,18 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json_response(self.get_agent_detail(agent_id))
         elif self.path == '/api/ngrok/start':
             self.send_json_response(self.start_ngrok())
+        elif self.path == '/api/board':
+            self.send_json_response(self.get_board())
+        elif self.path == '/api/backlog':
+            self.send_json_response(self.get_backlog())
+        elif self.path.startswith('/api/board/'):
+            # 讀取留言板相關檔案
+            filename = self.path.replace('/api/board/', '')
+            self.send_board_file(filename)
+        elif self.path == '/api/schedules':
+            self.send_json_response(self.get_schedules())
+        elif self.path == '/api/cron':
+            self.send_json_response(self.get_crons())
         else:
             super().do_GET()
     
@@ -91,7 +177,6 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         result = json.dumps(data, ensure_ascii=False).encode()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Content-Length', len(result))
         self.end_headers()
         self.wfile.write(result)
@@ -106,7 +191,7 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 result = subprocess.run(['curl', '-s', 'localhost:4040/api/tunnels'], 
                                       capture_output=True, timeout=2)
                 if result.returncode == 0:
-                    import json
+
                     tunnels = json.loads(result.stdout)
                     for tunnel in tunnels.get('tunnels', []):
                         if tunnel.get('proto') == 'https':
@@ -140,7 +225,7 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             result = subprocess.run(['curl', '-s', 'localhost:4040/api/tunnels'], 
                                   capture_output=True, timeout=2)
             if result.returncode == 0:
-                import json
+
                 tunnels = json.loads(result.stdout)
                 for tunnel in tunnels.get('tunnels', []):
                     if tunnel.get('proto') == 'https':
@@ -154,69 +239,258 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             return {"error": str(e)}
     
+    def get_board(self):
+        """取得留言板內容"""
+        import os
+        try:
+            board_path = os.path.expanduser('~/.openclaw/workspaces/shared/BOARD.md')
+            if os.path.isfile(board_path):
+                with open(board_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                return {"content": content}
+            else:
+                return {"content": "", "error": "Board file not found"}
+        except Exception as e:
+            return {"content": "", "error": str(e)}
+    
+    def get_backlog(self):
+        """取得 Backlog 看板內容"""
+        import os
+        try:
+            backlog_path = os.path.expanduser('~/.openclaw/workspaces/shared/BACKLOG.md')
+            if os.path.isfile(backlog_path):
+                with open(backlog_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                return {"content": content}
+            else:
+                return {"content": "", "error": "Backlog file not found"}
+        except Exception as e:
+            return {"content": "", "error": str(e)}
+    
+    def send_board_file(self, filename):
+        """取得留言板相關檔案"""
+        import os
+        try:
+            # 防止目錄遍歷攻擊
+            filename = os.path.basename(filename)
+            file_path = os.path.expanduser(f'~/.openclaw/workspaces/shared/{filename}')
+            
+            if os.path.isfile(file_path):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                self.send_json_response({"content": content})
+            else:
+                self.send_json_response({"error": "File not found"})
+        except Exception as e:
+            self.send_json_response({"error": str(e)})
+    
+    def get_schedules(self):
+        """取得所有 Agent 的排程資訊"""
+        import os
+        import glob
+        try:
+            schedules = []
+            workspaces_path = os.path.expanduser('~/.openclaw/workspaces')
+            
+            # 讀取每個 workspace 的 HEARTBEAT.md
+            for workspace_dir in os.listdir(workspaces_path):
+                workspace_full = os.path.join(workspaces_path, workspace_dir)
+                if not os.path.isdir(workspace_full):
+                    continue
+                
+                heartbeat_path = os.path.join(workspace_full, 'HEARTBEAT.md')
+                identity_path = os.path.join(workspace_full, 'IDENTITY.md')
+                
+                agent_name = workspace_dir
+                agent_emoji = '🤖'
+                
+                # 嘗試讀取 IDENTITY.md 獲取名稱
+                if os.path.isfile(identity_path):
+                    try:
+                        with open(identity_path, 'r') as f:
+                            content = f.read()
+                            # 解析 IDENTITY.md 格式: - **Name:** Coder
+                            for line in content.split('\n'):
+                                line = line.strip()
+                                # 移除 leading - 或 * 
+                                if line.startswith('- ') or line.startswith('* '):
+                                    line = line[2:].strip()
+                                if line.startswith('**Name:**'):
+                                    agent_name = line.split('**Name:**')[1].strip()
+                                elif line.startswith('**Emoji:**'):
+                                    agent_emoji = line.split('**Emoji:**')[1].strip()
+                    except:
+                        pass
+                
+                # 讀取 HEARTBEAT.md
+                has_schedule = False
+                tasks = []
+                if os.path.isfile(heartbeat_path):
+                    with open(heartbeat_path, 'r') as f:
+                        content = f.read()
+                        # 檢查是否有實際內容（非僅註釋）
+                        lines = [l.strip() for l in content.split('\n') if l.strip() and not l.strip().startswith('#')]
+                        if lines:
+                            has_schedule = True
+                            tasks = lines
+                
+                schedules.append({
+                    "workspace": workspace_dir,
+                    "name": agent_name,
+                    "emoji": agent_emoji,
+                    "hasSchedule": has_schedule,
+                    "tasks": tasks
+                })
+            
+            return {"schedules": schedules}
+        except Exception as e:
+            return {"schedules": [], "error": str(e)}
+    
+    def get_crons(self):
+        """取得 Cron Jobs"""
+        import os
+
+        try:
+            cron_path = os.path.expanduser('~/.openclaw/cron/jobs.json')
+            if os.path.isfile(cron_path):
+                with open(cron_path, 'r') as f:
+                    data = json.load(f)
+                
+                jobs = []
+                for job in data.get('jobs', []):
+                    schedule = job.get('schedule', {})
+                    state = job.get('state', {})
+                    payload = job.get('payload', {})
+                    delivery = job.get('delivery', {})
+                    
+                    # 格式化時間
+                    from datetime import datetime
+                    next_run = None
+                    last_run = None
+                    if state.get('nextRunAtMs'):
+                        next_run = datetime.fromtimestamp(state['nextRunAtMs'] / 1000).strftime('%Y-%m-%d %H:%M')
+                    if state.get('lastRunAtMs'):
+                        last_run = datetime.fromtimestamp(state['lastRunAtMs'] / 1000).strftime('%Y-%m-%d %H:%M')
+                    
+                    # 格式化執行時長
+                    last_duration_ms = state.get('lastDurationMs')
+                    last_duration = None
+                    if last_duration_ms:
+                        if last_duration_ms < 1000:
+                            last_duration = f"{last_duration_ms}ms"
+                        elif last_duration_ms < 60000:
+                            last_duration = f"{last_duration_ms/1000:.1f}秒"
+                        else:
+                            last_duration = f"{last_duration_ms/60000:.1f}分"
+                    
+                    # 取得提示詞 (可選截斷長內容)
+                    message = payload.get('message', '')
+                    message_preview = message[:200] + '...' if len(message) > 200 else message
+                    
+                    jobs.append({
+                        "id": job.get('id'),
+                        "name": job.get('name'),
+                        "description": job.get('description', ''),
+                        "enabled": job.get('enabled', True),
+                        "schedule": schedule.get('expr', ''),
+                        "scheduleKind": schedule.get('kind', 'cron'),
+                        "tz": schedule.get('tz', 'UTC'),
+                        "nextRun": next_run,
+                        "lastRun": last_run,
+                        "lastStatus": state.get('lastStatus', 'unknown'),
+                        "lastDuration": last_duration,
+                        "lastDurationMs": last_duration_ms,
+                        # 新增欄位
+                        "agentId": job.get('agentId', ''),
+                        "sessionTarget": job.get('sessionTarget', 'isolated'),
+                        "wakeMode": job.get('wakeMode', 'now'),
+                        "payloadKind": payload.get('kind', ''),
+                        "message": message,
+                        "messagePreview": message_preview,
+                        "model": payload.get('model', ''),
+                        "deliveryMode": delivery.get('mode', ''),
+                        "deliveryChannel": delivery.get('channel', ''),
+                        "deliveryTo": delivery.get('to', ''),
+                        "lastError": state.get('lastError'),
+                        "lastDelivered": state.get('lastDelivered'),
+                        "consecutiveErrors": state.get('consecutiveErrors', 0),
+                    })
+                
+                return {"jobs": jobs, "count": len(jobs)}
+            else:
+                return {"jobs": [], "error": "Cron config not found"}
+        except Exception as e:
+            return {"jobs": [], "error": str(e)}
+    
     def get_agents(self):
         """取得 Agents 列表"""
-        try:
-            with open(CONFIG_PATH, 'r') as f:
-                config = json.load(f)
-            
-            agents_list = config.get('agents', {}).get('list', [])
-            agents = []
-            for a in agents_list:
-                identity = a.get('identity', {})
-                agents.append({
-                    "id": a.get('id'),
-                    "name": identity.get('name', a.get('id')),
-                    "emoji": identity.get('emoji', '🤖'),
-                    "description": identity.get('description', ''),
-                })
-            return {"agents": agents}
-        except Exception as e:
-            return {"agents": [], "error": str(e)}
+        def fetch():
+            try:
+                with open(CONFIG_PATH, 'r') as f:
+                    config = json.load(f)
+                
+                agents_list = config.get('agents', {}).get('list', [])
+                agents = []
+                for a in agents_list:
+                    identity = a.get('identity', {})
+                    agents.append({
+                        "id": a.get('id'),
+                        "name": identity.get('name', a.get('id')),
+                        "emoji": identity.get('emoji', '🤖'),
+                        "description": identity.get('description', ''),
+                    })
+                return {"agents": agents}
+            except Exception as e:
+                return {"agents": [], "error": str(e)}
+        return get_cached('agents', fetch, ttl=60)
     
     def get_channels(self):
         """取得 Channels 狀態"""
-        try:
-            with open(CONFIG_PATH, 'r') as f:
-                config = json.load(f)
-            
-            channels = config.get('channels', {})
-            result = {}
-            for ch, conf in channels.items():
-                if isinstance(conf, dict):
-                    accounts = conf.get('accounts', {})
-                    account_list = []
-                    for acc_id, acc_conf in accounts.items():
-                        account_list.append({
-                            "id": acc_id,
-                            "enabled": acc_conf.get('enabled', True),
-                            "botToken": "***" + acc_conf.get('botToken', '')[-10:] if acc_conf.get('botToken') else None,
-                        })
-                    result[ch] = {
-                        "enabled": conf.get('enabled', True),
-                        "accounts": account_list,
-                    }
-            return {"channels": result}
-        except Exception as e:
-            return {"channels": {}, "error": str(e)}
+        def fetch():
+            try:
+                with open(CONFIG_PATH, 'r') as f:
+                    config = json.load(f)
+                
+                channels = config.get('channels', {})
+                result = {}
+                for ch, conf in channels.items():
+                    if isinstance(conf, dict):
+                        accounts = conf.get('accounts', {})
+                        account_list = []
+                        for acc_id, acc_conf in accounts.items():
+                            account_list.append({
+                                "id": acc_id,
+                                "enabled": acc_conf.get('enabled', True),
+                                "botToken": "***" if acc_conf.get('botToken') else None,
+                            })
+                        result[ch] = {
+                            "enabled": conf.get('enabled', True),
+                            "accounts": account_list,
+                        }
+                return {"channels": result}
+            except Exception as e:
+                return {"channels": {}, "error": str(e)}
+        return get_cached('channels', fetch, ttl=60)
     
     def get_config(self):
         """取得完整配置"""
-        try:
-            with open(CONFIG_PATH, 'r') as f:
-                config = json.load(f)
-            # 隱藏敏感資訊
-            if 'channels' in config:
-                for ch, conf in config['channels'].items():
-                    if isinstance(conf, dict) and 'accounts' in conf:
-                        for acc_id, acc_conf in conf.get('accounts', {}).items():
-                            if 'botToken' in acc_conf:
-                                acc_conf['botToken'] = '***'
-                            if 'apiKey' in acc_conf:
-                                acc_conf['apiKey'] = '***'
-            return {"config": config}
-        except Exception as e:
-            return {"error": str(e)}
+        def fetch():
+            try:
+                with open(CONFIG_PATH, 'r') as f:
+                    config = json.load(f)
+                # 隱藏敏感資訊
+                if 'channels' in config:
+                    for ch, conf in config['channels'].items():
+                        if isinstance(conf, dict) and 'accounts' in conf:
+                            for acc_id, acc_conf in conf.get('accounts', {}).items():
+                                if 'botToken' in acc_conf:
+                                    acc_conf['botToken'] = '***'
+                                if 'apiKey' in acc_conf:
+                                    acc_conf['apiKey'] = '***'
+                return {"config": config}
+            except Exception as e:
+                return {"error": str(e)}
+        return get_cached('config', fetch, ttl=60)
     
     def get_agent_detail(self, agent_id):
         """取得單一 Agent 詳情"""
@@ -432,14 +706,13 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_header('Content-Type', 'text/event-stream')
                     self.send_header('Cache-Control', 'no-cache')
                     self.send_header('Connection', 'close')
-                    self.send_header('Access-Control-Allow-Origin', '*')
                     self.send_header('Access-Control-Allow-Headers', 'Content-Type')
                     self.end_headers()
                     
-                    # 使用較小的 chunk size 以獲得更快的響應
+                    # 優化 chunk size 提升流式響應速度
                     gateway_resp = urllib.request.urlopen(req, timeout=120)
                     while True:
-                        chunk = gateway_resp.read(8192)
+                        chunk = gateway_resp.read(16384)  # 16KB chunks for faster streaming
                         if not chunk:
                             break
                         self.wfile.write(chunk)
@@ -451,31 +724,25 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         result = response.read()
                         self.send_response(200)
                         self.send_header('Content-Type', 'application/json')
-                        self.send_header('Access-Control-Allow-Origin', '*')
                         self.end_headers()
                         self.wfile.write(result)
             except urllib.error.HTTPError as e:
                 error_body = e.read()
                 self.send_response(e.code)
                 self.send_header('Content-Type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(error_body)
             except Exception as e:
                 self.send_response(500)
                 self.send_header('Content-Type', 'application/json')
-                self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": str(e)}).encode())
         else:
             self.send_error(404)
-    
-    def end_headers(self):
-        self.send_header('Access-Control-Allow-Origin', '*')
-        super().end_headers()
 
 print(f"🚀 ClawChat Server: http://localhost:{PORT}")
 print(f"📡 API: /api/status, /api/agents, /api/channels, /api/config")
 
+socketserver.TCPServer.allow_reuse_address = True
 with socketserver.TCPServer(("", PORT), CORSHTTPRequestHandler) as httpd:
     httpd.serve_forever()

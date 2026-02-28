@@ -144,6 +144,89 @@
       border-color: var(--border-color);
     }
     
+    /* Board message styling - 卡片式佈局 */
+    #app .board-message,
+    .board-message {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      transition: all 0.2s ease;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    #app .board-message:hover,
+    .board-message:hover {
+      background: var(--bg-hover);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transform: translateY(-1px);
+    }
+    #app .board-message .meta,
+    .board-message .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+    #app .board-message .author-row,
+    .board-message .author-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #app .board-message .time,
+    .board-message .time {
+      color: #888;
+      font-size: 11px;
+    }
+    #app .board-message .author,
+    .board-message .author {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+    #app .board-message .author .emoji,
+    .board-message .author .emoji {
+      font-size: 16px;
+    }
+    #app .board-message .content,
+    .board-message .content {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      padding-top: 8px;
+      border-top: 1px solid var(--border-color);
+    }
+    #app .board-message .content ul,
+    #app .board-message .content ol,
+    .board-message .content ul,
+    .board-message .content ol {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+    #app .board-message .content li,
+    .board-message .content li {
+      margin: 4px 0;
+    }
+    #app .board-message .content p,
+    .board-message .content p {
+      margin: 6px 0;
+    }
+    #app .board-message .content p:first-child,
+    .board-message .content p:first-child {
+      margin-top: 0;
+    }
+    #app .board-message .content p:last-child,
+    .board-message .content p:last-child {
+      margin-bottom: 0;
+    }
+    
     .agent-dropdown { max-height: 300px; overflow-y: auto; }
     
     /* Markdown preview styles */
@@ -158,8 +241,11 @@
     .markdown-body pre { background: var(--bg-hover); padding: 1em; border-radius: 6px; overflow-x: auto; margin: 0.5em 0; }
     .markdown-body pre code { background: none; padding: 0; }
     .markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin: 0.5em 0; }
-    .markdown-body li { margin: 0.25em 0; }
-    .markdown-body li > ul, .markdown-body li > ol { margin: 0.25em 0; }
+    .markdown-body li { margin: 1em 0; line-height: 1.7; padding-left: 0.5em; }
+    .markdown-body li > ul, .markdown-body li > ol { margin: 0.5em 0; }
+    .markdown-body li p { margin: 0.5em 0; }
+    .markdown-body li:first-child { margin-top: 0; }
+    .markdown-body li:last-child { margin-bottom: 0; }
     .markdown-body blockquote { padding-left: 1em; color: var(--text-muted); margin: 0.5em 0; }
     .markdown-body a { color: var(--accent); text-decoration: underline; }
     .markdown-body a:hover { color: var(--accent-hover); }
@@ -207,6 +293,27 @@
               :class="currentView === 'manage' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
             >
               <i class="bi bi-gear me-1"></i> 管理
+            </button>
+            <button 
+              @click="currentView = 'board'"
+              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
+              :class="currentView === 'board' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
+            >
+              <i class="bi bi-chat-square-text me-1"></i> 留言版
+            </button>
+            <button 
+              @click="currentView = 'schedule'"
+              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
+              :class="currentView === 'schedule' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
+            >
+              <i class="bi bi-clock me-1"></i> 排程
+            </button>
+            <button 
+              @click="currentView = 'backlog'"
+              class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
+              :class="currentView === 'backlog' ? 'bg-[#2563eb] text-white' : 'bg-[#1f1f1f] text-gray-400 hover:text-white'"
+            >
+              <i class="bi bi-kanban me-1"></i> 看板
             </button>
             <!-- 主題切換 -->
             <button 
@@ -707,6 +814,439 @@
           </div>
         </div>
         
+        <!-- 留言板內容 -->
+        <div v-if="currentView === 'board'" class="flex-1 overflow-y-auto p-4 md:p-6" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-gray-50'">
+          <div class="max-w-4xl mx-auto">
+            <!-- 頂部標題列 -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 class="text-2xl font-bold flex items-center gap-3" :class="isDarkMode ? 'text-white' : 'text-gray-900'">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center" :class="isDarkMode ? 'bg-[#2563eb]' : 'bg-blue-500'">
+                    <i class="bi bi-chat-square-text text-white"></i>
+                  </span>
+                  公共留言板
+                </h2>
+                <p v-if="boardLastUpdate" class="text-sm mt-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-clock me-1"></i>最後更新：{{ boardLastUpdate }}
+                </p>
+              </div>
+              
+              <!-- 控制項 -->
+              <div class="flex items-center gap-2">
+                <!-- 自動刷新開關 -->
+                <button 
+                  @click="boardAutoRefresh = !boardAutoRefresh"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+                  :class="boardAutoRefresh ? (isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600') : (isDarkMode ? 'bg-[#1f1f1f] text-gray-400' : 'bg-white text-gray-500')"
+                  :title="boardAutoRefresh ? '自動刷新已開啟 (30秒)' : '自動刷新已關閉'"
+                >
+                  <i class="bi" :class="boardAutoRefresh ? 'bi-arrow-repeat' : 'bi-arrow-repeat'"></i>
+                  <span class="hidden sm:inline">{{ boardAutoRefresh ? '自動' : '關閉' }}</span>
+                </button>
+                
+                <!-- 重新整理按鈕 -->
+                <button 
+                  @click="loadBoard"
+                  :disabled="boardLoading"
+                  class="p-2 rounded-lg transition-colors"
+                  :class="isDarkMode ? 'bg-[#1f1f1f] hover:bg-[#252525] text-gray-400' : 'bg-white hover:bg-gray-100 text-gray-600'"
+                  title="重新整理"
+                >
+                  <i class="bi bi-arrow-clockwise" :class="boardLoading ? 'animate-spin' : ''"></i>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 內容卡片 -->
+            <div 
+              class="rounded-2xl border overflow-hidden transition-all"
+              :class="isDarkMode ? 'bg-[#1f1f1f] border-[#333] shadow-lg shadow-black/20' : 'bg-white border-gray-200 shadow-md'"
+            >
+              <!-- 載入中狀態 -->
+              <div v-if="boardLoading && !boardContent" class="flex flex-col items-center justify-center py-16">
+                <div class="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin mb-4"
+                     :class="isDarkMode ? 'border-blue-500 border-t-transparent' : 'border-blue-500 border-t-transparent'">
+                </div>
+                <p :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">載入中...</p>
+              </div>
+              
+              <!-- 留言內容 -->
+              <div v-else class="p-6">
+                <!-- 空狀態 -->
+                <div v-if="!boardContent" class="text-center py-12" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-inbox text-4xl mb-4 block"></i>
+                  <p>尚無留言</p>
+                </div>
+                
+                <!-- 有內容 -->
+                <div 
+                  v-else 
+                  class="board-messages markdown-body"
+                  :class="isDarkMode ? 'text-gray-300' : 'text-gray-700'"
+                  v-html="renderBoardMessages(boardContent)"
+                  style="padding: 8px;"
+                >
+                </div>
+              </div>
+              
+              <!-- 底部狀態列 -->
+              <div 
+                v-if="boardContent"
+                class="px-6 py-3 border-t flex items-center justify-between text-sm"
+                :class="isDarkMode ? 'border-[#333] text-gray-500' : 'border-gray-100 text-gray-400'"
+              >
+                <span><i class="bi bi-info-circle me-1"></i>唯讀模式</span>
+                <span v-if="boardLoading"><i class="bi bi-arrow-clockwise animate-spin me-1"></i>更新中...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 排程內容 - 優化版雙欄佈局 -->
+        <div v-if="currentView === 'schedule'" class="flex-1 overflow-y-auto p-4" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-white'">
+          <!-- 載入中 -->
+          <div v-if="scheduleLoading" class="flex items-center justify-center h-64">
+            <div class="text-center" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+              <i class="bi bi-hourglass-split animate-spin text-3xl"></i>
+              <p class="mt-2">載入中...</p>
+            </div>
+          </div>
+          
+          <div v-else class="max-w-7xl mx-auto">
+            <!-- 頂部狀態列 -->
+            <div class="rounded-xl p-4 mb-4 border" :class="isDarkMode ? 'bg-[#1f1f1f] border-[#333]' : 'bg-gray-100 border-gray-200'">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <h2 class="text-xl font-bold flex items-center gap-2" :class="isDarkMode ? 'text-white' : 'text-gray-900'">
+                  <i class="bi bi-clock"></i>
+                  排程總覽
+                </h2>
+                <div class="flex items-center gap-3">
+                  <!-- 統計標籤 -->
+                  <div class="flex gap-1 rounded-lg p-1" :class="isDarkMode ? 'bg-[#252525]' : 'bg-gray-200'">
+                    <span class="px-3 py-1.5 rounded-md text-sm font-medium" :class="isDarkMode ? 'bg-[#333] text-white' : 'bg-white text-gray-900 shadow-sm'">
+                      全部 ({{ cronJobs.length }})
+                    </span>
+                    <span class="px-3 py-1.5 rounded-md text-sm font-medium text-green-500">
+                      啟用 ({{ cronJobs.filter(j => j.enabled).length }})
+                    </span>
+                    <span class="px-3 py-1.5 rounded-md text-sm font-medium" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">
+                      停用 ({{ cronJobs.filter(j => !j.enabled).length }})
+                    </span>
+                  </div>
+                  <button 
+                    @click="loadSchedules"
+                    class="p-2 rounded-lg transition-colors"
+                    :class="isDarkMode ? 'hover:bg-[#252525] text-gray-400' : 'hover:bg-gray-200 text-gray-600'"
+                    title="重新整理"
+                  >
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 雙欄佈局 -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              <!-- 左側：Agent 列表 -->
+              <div class="lg:col-span-1">
+                <div class="rounded-xl p-4 sticky top-4 border" :class="isDarkMode ? 'bg-[#1f1f1f] border-[#333]' : 'bg-gray-50 border-gray-200'">
+                  <h3 class="text-lg font-semibold mb-4 flex items-center gap-2" :class="isDarkMode ? 'text-white' : 'text-gray-900'">
+                    🤖 Agent 列表
+                  </h3>
+                  <div class="space-y-2">
+                    <div 
+                      v-for="item in schedules" 
+                      :key="item.workspace"
+                      class="p-3 rounded-lg border transition-colors"
+                      :class="item.hasSchedule ? (isDarkMode ? 'border-green-500/30 bg-green-500/5' : 'border-green-500/30 bg-green-50') : (isDarkMode ? 'border-[#333] hover:border-[#444]' : 'border-gray-200 hover:border-gray-300')"
+                    >
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="text-xl">{{ item.emoji }}</span>
+                          <div>
+                            <div class="font-medium text-sm" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ item.name }}</div>
+                            <div class="text-xs" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">{{ item.workspace }}</div>
+                          </div>
+                        </div>
+                        <span 
+                          class="text-xs px-2 py-1 rounded-full"
+                          :class="item.hasSchedule ? (isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700') : (isDarkMode ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-200 text-gray-500')"
+                        >
+                          {{ item.hasSchedule ? '✓ ' + item.tasks.length : '無' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 右側：Cron Jobs 列表 -->
+              <div class="lg:col-span-3 space-y-3">
+                <div v-if="cronJobs.length === 0" class="text-center py-12" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-clock text-4xl mb-4 block"></i>
+                  <p>尚無排程任務</p>
+                </div>
+                
+                <!-- Job 卡片 -->
+                <div 
+                  v-for="job in cronJobs" 
+                  :key="job.id"
+                  class="rounded-xl border overflow-hidden transition-all"
+                  :class="[isDarkMode ? 'bg-[#1f1f1f] border-[#333] hover:border-[#444]' : 'bg-white border-gray-200 hover:border-gray-300', expandedJob === job.id ? 'ring-2 ring-blue-500' : '']"
+                >
+                  <!-- 卡片-header (可點擊展開) -->
+                  <div 
+                    class="p-4 cursor-pointer transition-colors"
+                    :class="isDarkMode ? 'hover:bg-[#252525]/50' : 'hover:bg-gray-50'"
+                    @click="expandedJob = expandedJob === job.id ? null : job.id"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <!-- 狀態指示燈 -->
+                        <div 
+                          class="w-3 h-3 rounded-full"
+                          :class="job.enabled ? 'bg-green-500 animate-pulse' : (isDarkMode ? 'bg-gray-500' : 'bg-gray-400')"
+                        ></div>
+                        
+                        <!-- 圖標 -->
+                        <span class="text-xl" :title="'目標: ' + (job.sessionTarget || '全局')">
+                          {{ getJobIcon(job.sessionTarget) }}
+                        </span>
+                        
+                        <!-- 名稱與排程 -->
+                        <div>
+                          <h4 class="font-semibold" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ job.name }}</h4>
+                          <p class="text-sm font-mono" :class="isDarkMode ? 'text-gray-500' : 'text-gray-500'">{{ job.schedule }}</p>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center gap-4">
+                        <!-- 下次執行 -->
+                        <div v-if="job.nextRun" class="hidden sm:block text-right">
+                          <p class="text-xs" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">下次執行</p>
+                          <p class="text-sm text-green-500">{{ job.nextRun }}</p>
+                        </div>
+                        
+                        <!-- 狀態標籤 -->
+                        <span 
+                          class="text-xs px-2 py-1 rounded"
+                          :class="job.enabled ? (isDarkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700') : (isDarkMode ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-200 text-gray-500')"
+                        >
+                          {{ job.enabled ? '啟用' : '停用' }}
+                        </span>
+                        
+                        <!-- 展開圖標 -->
+                        <span 
+                          class="transition-transform"
+                          :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'"
+                          :class="expandedJob === job.id ? 'rotate-180' : ''"
+                        >
+                          ▼
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- 展開詳情 -->
+                  <div v-if="expandedJob === job.id" class="border-t p-4" :class="isDarkMode ? 'border-[#333] bg-[#252525]/30' : 'border-gray-200 bg-gray-50'">
+                    <div class="space-y-3">
+                      <!-- 詳細資訊網格 -->
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="rounded-lg p-3" :class="isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'">
+                          <p class="text-xs mb-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">目標</p>
+                          <p class="font-medium" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ job.sessionTarget || '全局' }}</p>
+                        </div>
+                        <div class="rounded-lg p-3" :class="isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'">
+                          <p class="text-xs mb-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">類型</p>
+                          <p class="font-medium" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ job.scheduleKind || 'cron' }}</p>
+                        </div>
+                        <div class="rounded-lg p-3" :class="isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'">
+                          <p class="text-xs mb-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">下次執行</p>
+                          <p class="font-medium text-green-500">{{ job.nextRun || '-' }}</p>
+                        </div>
+                        <div class="rounded-lg p-3" :class="isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'">
+                          <p class="text-xs mb-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">狀態</p>
+                          <p :class="job.lastStatus === 'ok' ? 'text-green-500' : (isDarkMode ? 'text-red-400' : 'text-red-600')">
+                            {{ job.lastStatus || 'unknown' }}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <!-- 執行資訊 -->
+                      <div class="flex flex-wrap gap-4 text-sm">
+                        <div v-if="job.lastRun" class="flex items-center gap-1">
+                          <span :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">上次：</span>
+                          <span :class="isDarkMode ? 'text-gray-300' : 'text-gray-600'">{{ job.lastRun }}</span>
+                        </div>
+                        <div v-if="job.lastDuration" class="flex items-center gap-1">
+                          <span :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">耗時：</span>
+                          <span class="text-blue-500">{{ job.lastDuration }}</span>
+                        </div>
+                        <div v-if="job.consecutiveErrors > 0" class="flex items-center gap-1">
+                          <span :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">連續錯誤：</span>
+                          <span class="text-red-500">{{ job.consecutiveErrors }}</span>
+                        </div>
+                      </div>
+                      
+                      <!-- 錯誤訊息 -->
+                      <div v-if="job.lastError" class="p-3 rounded-lg border" :class="isDarkMode ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200'">
+                        <span class="text-sm" :class="isDarkMode ? 'text-red-400' : 'text-red-600'">錯誤：{{ job.lastError }}</span>
+                      </div>
+                      
+                      <!-- Prompt 預覽 -->
+                      <div v-if="job.message || job.messagePreview" class="rounded-lg p-3" :class="isDarkMode ? 'bg-[#1f1f1f]' : 'bg-white'">
+                        <p class="text-xs mb-2" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">Prompt</p>
+                        <p class="text-sm line-clamp-3 font-mono" :class="isDarkMode ? 'text-gray-300' : 'text-gray-600'">
+                          {{ (job.messagePreview || job.message).substring(0, 300) }}{{ (job.messagePreview || job.message).length > 300 ? '...' : '' }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Backlog 看板內容 -->
+        <div v-if="currentView === 'backlog'" class="flex-1 overflow-y-auto p-4" :class="isDarkMode ? 'bg-[#0f0f0f]' : 'bg-white'">
+          <!-- 頂部標題列 -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-2xl font-bold flex items-center gap-3" :class="isDarkMode ? 'text-white' : 'text-gray-900'">
+                <span class="w-10 h-10 rounded-xl flex items-center justify-center" :class="isDarkMode ? 'bg-[#8b5cf6]' : 'bg-purple-500'">
+                  <i class="bi bi-kanban text-white"></i>
+                </span>
+                Backlog 看板
+              </h2>
+              <p v-if="backlogLastUpdate" class="text-sm mt-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                <i class="bi bi-clock me-1"></i>最後更新：{{ backlogLastUpdate }}
+              </p>
+            </div>
+            
+            <!-- 控制項 -->
+            <div class="flex items-center gap-2">
+              <button 
+                @click="loadBacklog"
+                :disabled="backlogLoading"
+                class="p-2 rounded-lg transition-colors"
+                :class="isDarkMode ? 'bg-[#1f1f1f] hover:bg-[#252525] text-gray-400' : 'bg-white hover:bg-gray-100 text-gray-600'"
+                title="重新整理"
+              >
+                <i class="bi bi-arrow-clockwise" :class="backlogLoading ? 'animate-spin' : ''"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- 看板內容 -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- To Do 欄 -->
+            <div class="rounded-xl border overflow-hidden" :class="isDarkMode ? 'bg-[#1f1f1f] border-[#333]' : 'bg-white border-gray-200'">
+              <div class="px-4 py-3 border-b flex items-center gap-2" :class="isDarkMode ? 'border-[#333] bg-[#252525]' : 'border-gray-100 bg-gray-50'">
+                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                <h3 class="font-semibold" :class="isDarkMode ? 'text-white' : 'text-gray-900'">🔵 To Do</h3>
+                <span class="ml-auto text-sm" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">{{ backlogData.todo.length }}</span>
+              </div>
+              <div class="p-3 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                <div v-if="backlogLoading && backlogData.todo.length === 0" class="text-center py-8" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-hourglass-split animate-spin text-2xl"></i>
+                  <p class="mt-2 text-sm">載入中...</p>
+                </div>
+                <div v-else-if="backlogData.todo.length === 0" class="text-center py-8" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-inbox text-2xl"></i>
+                  <p class="mt-2 text-sm">沒有待辦事項</p>
+                </div>
+                <div 
+                  v-for="(task, idx) in backlogData.todo" 
+                  :key="'todo-'+idx"
+                  class="rounded-lg p-3 border transition-all hover:shadow-md cursor-pointer"
+                  :class="isDarkMode ? 'border-[#333] hover:border-[#444] bg-[#252525]' : 'border-gray-200 hover:border-gray-300 bg-white'"
+                >
+                  <div class="font-medium text-sm mb-2" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ task.title }}</div>
+                  <div v-if="task.author" class="text-xs" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                    <i class="bi bi-person me-1"></i>{{ task.author }}
+                  </div>
+                  <div v-if="task.date" class="text-xs mt-1" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                    <i class="bi bi-calendar me-1"></i>{{ task.date }}
+                  </div>
+                  <div v-if="task.description" class="text-xs mt-2 line-clamp-2" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">
+                    {{ task.description }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- In Progress 欄 -->
+            <div class="rounded-xl border overflow-hidden" :class="isDarkMode ? 'bg-[#1f1f1f] border-[#333]' : 'bg-white border-gray-200'">
+              <div class="px-4 py-3 border-b flex items-center gap-2" :class="isDarkMode ? 'border-[#333] bg-[#252525]' : 'border-gray-100 bg-gray-50'">
+                <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                <h3 class="font-semibold" :class="isDarkMode ? 'text-white' : 'text-gray-900'">🟡 In Progress</h3>
+                <span class="ml-auto text-sm" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">{{ backlogData.inProgress.length }}</span>
+              </div>
+              <div class="p-3 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                <div v-if="backlogLoading && backlogData.inProgress.length === 0" class="text-center py-8" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-hourglass-split animate-spin text-2xl"></i>
+                  <p class="mt-2 text-sm">載入中...</p>
+                </div>
+                <div v-else-if="backlogData.inProgress.length === 0" class="text-center py-8" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-inbox text-2xl"></i>
+                  <p class="mt-2 text-sm">沒有進行中的任務</p>
+                </div>
+                <div 
+                  v-for="(task, idx) in backlogData.inProgress" 
+                  :key="'ip-'+idx"
+                  class="rounded-lg p-3 border transition-all hover:shadow-md cursor-pointer"
+                  :class="isDarkMode ? 'border-yellow-500/30 hover:border-yellow-500/50 bg-[#252525]' : 'border-yellow-300/50 hover:border-yellow-300 bg-white'"
+                >
+                  <div class="font-medium text-sm mb-2" :class="isDarkMode ? 'text-white' : 'text-gray-900'">{{ task.title }}</div>
+                  <div v-if="task.author" class="text-xs" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                    <i class="bi bi-person me-1"></i>{{ task.author }}
+                  </div>
+                  <div v-if="task.assignee && task.assignee !== '待認領'" class="text-xs mt-1" :class="isDarkMode ? 'text-yellow-400' : 'text-yellow-600'">
+                    <i class="bi bi-person-check me-1"></i>{{ task.assignee }}
+                  </div>
+                  <div v-if="task.description" class="text-xs mt-2 line-clamp-2" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">
+                    {{ task.description }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Done 欄 -->
+            <div class="rounded-xl border overflow-hidden" :class="isDarkMode ? 'bg-[#1f1f1f] border-[#333]' : 'bg-white border-gray-200'">
+              <div class="px-4 py-3 border-b flex items-center gap-2" :class="isDarkMode ? 'border-[#333] bg-[#252525]' : 'border-gray-100 bg-gray-50'">
+                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                <h3 class="font-semibold" :class="isDarkMode ? 'text-white' : 'text-gray-900'">✅ Done</h3>
+                <span class="ml-auto text-sm" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">{{ backlogData.done.length }}</span>
+              </div>
+              <div class="p-3 space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+                <div v-if="backlogLoading && backlogData.done.length === 0" class="text-center py-8" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-hourglass-split animate-spin text-2xl"></i>
+                  <p class="mt-2 text-sm">載入中...</p>
+                </div>
+                <div v-else-if="backlogData.done.length === 0" class="text-center py-8" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                  <i class="bi bi-inbox text-2xl"></i>
+                  <p class="mt-2 text-sm">沒有已完成的任務</p>
+                </div>
+                <div 
+                  v-for="(task, idx) in backlogData.done" 
+                  :key="'done-'+idx"
+                  class="rounded-lg p-3 border transition-all hover:shadow-md cursor-pointer opacity-75"
+                  :class="isDarkMode ? 'border-green-500/30 hover:border-green-500/50 bg-[#252525]' : 'border-green-300/50 hover:border-green-300 bg-white'"
+                >
+                  <div class="font-medium text-sm mb-2 line-through" :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">{{ task.title }}</div>
+                  <div v-if="task.author" class="text-xs" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+                    <i class="bi bi-person me-1"></i>{{ task.author }}
+                  </div>
+                  <div v-if="task.assignee && task.assignee !== '待認領'" class="text-xs mt-1" :class="isDarkMode ? 'text-green-400' : 'text-green-600'">
+                    <i class="bi bi-check-circle me-1"></i>{{ task.assignee }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <!-- 對話區域 -->
         <div v-if="currentView === 'chat'" class="flex-1 flex flex-col overflow-hidden">
           <!-- 訊息列表 -->
@@ -959,7 +1499,43 @@
         const showSessionDropdown = ref(false);
         const uploadedImages = ref([]);  // 上傳的圖片
         const messagesContainer = ref(null);
-        const currentView = ref('chat');  // 'chat' or 'manage'
+        const currentView = ref('chat');  // 'chat' or 'manage' or 'board'
+        
+        // 留言板資料
+        const boardContent = ref('');
+        const boardLoading = ref(false);
+        const boardAutoRefresh = ref(true);     // 自動刷新
+        const boardLastUpdate = ref('');         // 最後更新時間
+        let boardAutoRefreshTimer = null;       // 自動刷新計時器
+        
+        // Backlog 看板資料
+        const backlogContent = ref('');
+        const backlogLoading = ref(false);
+        const backlogLastUpdate = ref('');      // 最後更新時間
+        let backlogAutoRefreshTimer = null;     // 自動刷新計時器
+        
+        // 排程資料
+        const schedules = ref([]);
+        const scheduleLoading = ref(false);
+        const expandedJob = ref(null);  // 展開的 job 詳情
+        
+        // 獲取 job 圖標
+        const getJobIcon = (target) => {
+          if (!target || target === 'isolated') return '🔧';
+          if (target === 'code') return '💻';
+          if (target === 'rich') return '💰';
+          if (target === 'skill-manager') return '🛡️';
+          if (target === 'startup') return '🚀';
+          if (target === 'travel') return '✈️';
+          if (target === 'chef') return '🍳';
+          if (target === 'ip') return '📋';
+          if (target === 'nexchip') return '🔬';
+          if (target === 'shared') return '📋';
+          if (target === 'main') return '⚡️';
+          return '🤖';
+        };
+        
+        // 載入留言板
         
         // 管理頁面資料
         const systemStatus = ref('loading');
@@ -1030,6 +1606,124 @@
             }, 100);
           }
         };
+        
+        // 載入留言板
+        const loadBoard = async () => {
+          boardLoading.value = true;
+          try {
+            const resp = await fetch('/api/board');
+            const data = await resp.json();
+            boardContent.value = data.content || data.error || '無法載入留言板';
+            boardLastUpdate.value = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          } catch (e) {
+            boardContent.value = '載入失敗: ' + e.message;
+          }
+          boardLoading.value = false;
+        };
+        
+        // 自動刷新計時器
+        const startBoardAutoRefresh = () => {
+          if (boardAutoRefreshTimer) clearInterval(boardAutoRefreshTimer);
+          if (boardAutoRefresh.value) {
+            boardAutoRefreshTimer = setInterval(() => {
+              if (currentView.value === 'board') {
+                loadBoard();
+              }
+            }, 30000); // 30秒刷新一次
+          }
+        };
+        
+        // 監聽自動刷新開關
+        watch(boardAutoRefresh, () => {
+          localStorage.setItem('clawchat_board_autorefresh', boardAutoRefresh.value ? 'true' : 'false');
+          startBoardAutoRefresh();
+        });
+        
+        // 載入 Backlog 看板
+        const loadBacklog = async () => {
+          backlogLoading.value = true;
+          try {
+            const resp = await fetch('/api/backlog');
+            const data = await resp.json();
+            backlogContent.value = data.content || data.error || '無法載入看板';
+            backlogLastUpdate.value = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          } catch (e) {
+            backlogContent.value = '載入失敗: ' + e.message;
+          }
+          backlogLoading.value = false;
+        };
+        
+        // 解析 Backlog 內容為結構化資料
+        const parseBacklog = (content) => {
+          if (!content) return { todo: [], inProgress: [], done: [] };
+          
+          const result = { todo: [], inProgress: [], done: [] };
+          let currentSection = 'todo';
+          
+          const lines = content.split('\n');
+          for (const line of lines) {
+            if (line.includes('### 🔵 To Do') || line.includes('### To Do')) {
+              currentSection = 'todo';
+            } else if (line.includes('### 🟡 In Progress') || line.includes('### In Progress')) {
+              currentSection = 'inProgress';
+            } else if (line.includes('### ✅ Done') || line.includes('### Done')) {
+              currentSection = 'done';
+            } else if (line.startsWith('## [')) {
+              // 解析任務項目
+              const match = line.match(/## \[([^\]]+)\] (.+)/);
+              if (match) {
+                const task = {
+                  status: match[1].trim(),
+                  title: match[2].trim(),
+                  author: '',
+                  date: '',
+                  description: '',
+                  assignee: ''
+                };
+                result[currentSection].push(task);
+              }
+            } else if (line.startsWith('- **提出者**:') && result[currentSection].length > 0) {
+              const author = line.replace('- **提出者**:', '').trim();
+              result[currentSection][result[currentSection].length - 1].author = author;
+            } else if (line.startsWith('- **日期**:') && result[currentSection].length > 0) {
+              const date = line.replace('- **日期**:', '').trim();
+              result[currentSection][result[currentSection].length - 1].date = date;
+            } else if (line.startsWith('- **描述**:') && result[currentSection].length > 0) {
+              const desc = line.replace('- **描述**:', '').trim();
+              result[currentSection][result[currentSection].length - 1].description = desc;
+            } else if (line.startsWith('- **認領者**:') && result[currentSection].length > 0) {
+              const assignee = line.replace('- **認領者**:', '').trim();
+              result[currentSection][result[currentSection].length - 1].assignee = assignee;
+            }
+          }
+          
+          return result;
+        };
+        
+        // Backlog 解析後的資料
+        const backlogData = computed(() => parseBacklog(backlogContent.value));
+        
+        // 載入排程
+        const loadSchedules = async () => {
+          scheduleLoading.value = true;
+          try {
+            const [schedulesResp, cronsResp] = await Promise.all([
+              fetch('/api/schedules'),
+              fetch('/api/cron')
+            ]);
+            const schedulesData = await schedulesResp.json();
+            const cronsData = await cronsResp.json();
+            
+            schedules.value = schedulesData.schedules || [];
+            cronJobs.value = cronsData.jobs || [];
+          } catch (e) {
+            console.error('載入排程失敗:', e);
+          }
+          scheduleLoading.value = false;
+        };
+        
+        // Cron Jobs
+        const cronJobs = ref([]);
         
         // 格式化檔案大小
         const formatFileSize = (bytes) => {
@@ -1176,14 +1870,127 @@
         };
         
         // 渲染 Markdown
-        const renderMarkdown = (content) => {
+        const renderMarkdown = (content, baseUrl = '') => {
           if (!content) return '';
           try {
-            return marked.parse(content);
+            let parsed = marked.parse(content);
+            // 轉換相對連結 ./filename 為 API 連結，並加入點擊事件
+            if (baseUrl) {
+              parsed = parsed.replace(/href="\.\/([^"]+)"/g, (match, filename) => {
+                return `href="#" onclick="event.preventDefault(); window.previewBoardFile('${filename}');" data-board-file="${filename}"`;
+              });
+            }
+            return parsed;
           } catch (e) {
             return content;
           }
         };
+        
+        // 渲染留言板訊息（自訂格式）
+        const renderBoardMessages = (content) => {
+          if (!content) return '';
+          try {
+            // 先解析 markdown
+            let html = marked.parse(content);
+            
+            // 格式: - [YYYY-MM-DD HH:mm] **作者** Emoji 訊息
+            // 先處理 li 元素
+            html = html.replace(/<li>([\s\S]*?)<\/li>/g, (match, inner) => {
+              // 檢查是否包含時間格式
+              const timeMatch = inner.match(/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/);
+              if (timeMatch) {
+                const time = timeMatch[1];
+                // 移除時間方括號
+                let remaining = inner.replace(`[${time}]`, '').trim();
+                // 提取作者（粗體）和訊息
+                const authorMatch = remaining.match(/\*\*([^*]+)\*\*\s*(.+)/);
+                
+                if (authorMatch) {
+                  const author = authorMatch[1];
+                  // 分離 emoji 和名字
+                  const authorEmojiMatch = author.match(/^([^\s]+)\s*(.+)$/);
+                  let authorHtml = author;
+                  if (authorEmojiMatch) {
+                    authorHtml = `<span class="emoji">${authorEmojiMatch[1]}</span><span>${authorEmojiMatch[2]}</span>`;
+                  }
+                  const msgContent = authorMatch[2].trim();
+                  return `<li class="board-message">
+                    <div class="meta">
+                      <div class="author-row">
+                        <span class="author">${authorHtml}</span>
+                      </div>
+                      <span class="time"><i class="bi bi-clock me-1"></i>${time}</span>
+                    </div>
+                    <div class="content">${msgContent}</div>
+                  </li>`;
+                }
+                // 沒有作者，只有時間
+                return `<li class="board-message">
+                  <div class="meta">
+                    <span class="time"><i class="bi bi-clock me-1"></i>${time}</span>
+                  </div>
+                  <div class="content">${remaining}</div>
+                </li>`;
+              }
+              return match;
+            });
+            
+            // 處理 p 元素
+            html = html.replace(/<p>([\s\S]*?)<\/p>/g, (match, inner) => {
+              const timeMatch = inner.match(/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\]/);
+              if (timeMatch) {
+                const time = timeMatch[1];
+                let remaining = inner.replace(`[${time}]`, '').trim();
+                const authorMatch = remaining.match(/\*\*([^*]+)\*\*\s*(.+)/);
+                
+                if (authorMatch) {
+                  const author = authorMatch[1];
+                  const authorEmojiMatch = author.match(/^([^\s]+)\s*(.+)$/);
+                  let authorHtml = author;
+                  if (authorEmojiMatch) {
+                    authorHtml = `<span class="emoji">${authorEmojiMatch[1]}</span><span>${authorEmojiMatch[2]}</span>`;
+                  }
+                  const msgContent = authorMatch[2].trim();
+                  return `<div class="board-message">
+                    <div class="meta">
+                      <div class="author-row">
+                        <span class="author">${authorHtml}</span>
+                      </div>
+                      <span class="time"><i class="bi bi-clock me-1"></i>${time}</span>
+                    </div>
+                    <div class="content">${msgContent}</div>
+                  </div>`;
+                }
+              }
+              return match;
+            });
+            
+            return html;
+          } catch (e) {
+            console.error('Render board error:', e);
+            return marked.parse(content);
+          }
+        };
+        
+        // 預覽留言板檔案
+        const previewBoardFile = async (filename) => {
+          try {
+            const resp = await fetch(`/api/board/${filename}`);
+            const data = await resp.json();
+            if (data.content !== undefined) {
+              filePreviewPath.value = filename;
+              filePreviewContent.value = data.content;
+              filePreviewImage.value = null;
+            } else {
+              showToast(data.error || '無法載入檔案', 'error');
+            }
+          } catch (e) {
+            showToast('載入失敗: ' + e.message, 'error');
+          }
+        };
+        
+        // 掛載到 window 讓 onclick 可以呼叫
+        window.previewBoardFile = previewBoardFile;
         
         // 切換文檔展開狀態
         const toggleDoc = (docName) => {
@@ -1278,13 +2085,23 @@
           uploadedImages.value.splice(index, 1);
         };
         
-        // 滾動到底部
-        const scrollToBottom = () => {
-          nextTick(() => {
-            if (messagesContainer.value) {
-              messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-            }
-          });
+        // 滾動到底部（優化：減少滾動次數）
+        let scrollTimeout = null;
+        const scrollToBottom = (force = false) => {
+          if (scrollTimeout) return; // 節流
+          scrollTimeout = setTimeout(() => {
+            scrollTimeout = null;
+            nextTick(() => {
+              if (messagesContainer.value) {
+                const container = messagesContainer.value;
+                // 如果用戶已滾動到附近，自動滾動到底部
+                const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+                if (force || isNearBottom) {
+                  container.scrollTop = container.scrollHeight;
+                }
+              }
+            });
+          }, 50); // 50ms debounce
         };
         
         // 發送訊息
@@ -1528,6 +2345,12 @@
           // 載入主題
           loadTheme();
           
+          // 載入留言板自動刷新設定
+          const savedAutoRefresh = localStorage.getItem('clawchat_board_autorefresh');
+          if (savedAutoRefresh !== null) {
+            boardAutoRefresh.value = savedAutoRefresh === 'true';
+          }
+          
           // 確保 session 已初始化
           if (!currentSession.value && sessions.value.length > 0) {
             currentSession.value = sessions.value[0].id;
@@ -1575,6 +2398,13 @@
         watch(currentView, (newView) => {
           if (newView === 'manage') {
             fetchManageData();
+          } else if (newView === 'board') {
+            loadBoard();
+            startBoardAutoRefresh();
+          } else if (newView === 'schedule') {
+            loadSchedules();
+          } else if (newView === 'backlog') {
+            loadBacklog();
           }
         });
         
@@ -1599,6 +2429,22 @@
           currentSessionName,
           messagesContainer,
           currentView,
+          boardContent,
+          boardLoading,
+          boardAutoRefresh,
+          boardLastUpdate,
+          loadBoard,
+          backlogContent,
+          backlogLoading,
+          backlogLastUpdate,
+          backlogData,
+          loadBacklog,
+          schedules,
+          scheduleLoading,
+          expandedJob,
+          getJobIcon,
+          loadSchedules,
+          cronJobs,
           systemStatus,
           gatewayInfo,
           ngrokUrl,
@@ -1636,7 +2482,8 @@
           formatTime,
           copyMessage,
           copyFileContent,
-          renderContent
+          renderContent,
+          renderBoardMessages
         };
       }
     }).mount('#app');
