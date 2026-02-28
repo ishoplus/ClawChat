@@ -1461,10 +1461,13 @@
         // 模型列表
         const models = ref([
           { id: 'minimax-portal/MiniMax-M2.1', name: 'MiniMax M2.1' },
+          { id: 'minimax-portal/MiniMax-M2.5', name: 'MiniMax M2.5 (視覺)', supportsVision: true },
           { id: 'minimax-portal/MiniMax-M2.1-lightning', name: 'MiniMax M2.1 Lightning' },
           { id: 'zai/glm-4.7', name: 'GLM-4.7' },
           { id: 'zai/glm-5', name: 'GLM-5' },
-          { id: 'google/gemini-3-flash-preview', name: 'Gemini Flash (視覺)' }
+          { id: 'google/gemini-3-flash-preview', name: 'Gemini Flash (視覺)', supportsVision: true },
+          { id: 'ollama/llava:latest', name: 'LLaVA (本地)', supportsVision: true },
+          { id: 'ollama/moondream:latest', name: 'Moondream (本地)', supportsVision: true },
         ]);
         
         // 狀態
