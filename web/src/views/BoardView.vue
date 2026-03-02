@@ -34,7 +34,7 @@ watch(() => store.currentView, (v) => {
     <div class="max-w-4xl mx-auto">
       <!-- Header -->
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold flex items-center gap-3">
+        <h2 class="text-2xl font-bold flex items-center gap-3" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">
           <span 
             class="w-10 h-10 rounded-xl flex items-center justify-center"
             :class="store.isDarkMode ? 'bg-blue-500' : 'bg-blue-500'"
@@ -79,7 +79,7 @@ watch(() => store.currentView, (v) => {
           :class="store.isDarkMode ? 'text-gray-500' : 'text-gray-400'"
         >
           <i class="bi bi-inbox text-4xl mb-4 block"></i>
-          <p>尚無留言</p>
+          <p :class="store.isDarkMode ? 'text-gray-400' : 'text-gray-500'">尚無留言</p>
         </div>
 
         <!-- Content -->

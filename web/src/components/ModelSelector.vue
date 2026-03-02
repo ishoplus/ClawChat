@@ -14,7 +14,7 @@ const store = useChatStore()
         : 'bg-gray-100 hover:bg-gray-200'"
     >
       <i class="bi bi-cpu text-gray-400"></i>
-      <span class="text-sm">{{ store.selectedModelName }}</span>
+      <span class="text-sm" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">{{ store.selectedModelName }}</span>
       <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
     </button>
 
@@ -35,7 +35,7 @@ const store = useChatStore()
         ]"
       >
         <div class="text-sm">
-          <div class="font-medium">{{ model.name }}</div>
+          <div class="font-medium" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">{{ model.name }}</div>
         </div>
         <i 
           v-if="model.id === store.selectedModel" 

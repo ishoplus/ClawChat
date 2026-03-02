@@ -55,7 +55,7 @@ watch(() => store.currentView, (v) => { if (v === 'schedule') loadSchedules() })
         :class="store.isDarkMode ? 'bg-dark-secondary border-dark-border' : 'bg-gray-100 border-gray-200'"
       >
         <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold flex items-center gap-2">
+          <h2 class="text-xl font-bold flex items-center gap-2" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">
             <i class="bi bi-clock"></i>
             排程總覽
           </h2>
@@ -73,7 +73,7 @@ watch(() => store.currentView, (v) => { if (v === 'schedule') loadSchedules() })
       <div class="flex gap-2 mb-4">
         <span 
           class="px-3 py-1.5 rounded-md text-sm font-medium"
-          :class="store.isDarkMode ? 'bg-dark-secondary text-white' : 'bg-gray-100'"
+          :class="store.isDarkMode ? 'bg-dark-secondary text-white' : 'bg-gray-100 text-gray-700'"
         >
           全部 ({{ store.cronJobs.length }})
         </span>
@@ -96,7 +96,7 @@ watch(() => store.currentView, (v) => { if (v === 'schedule') loadSchedules() })
           :class="store.isDarkMode ? 'text-gray-500' : 'text-gray-400'"
         >
           <i class="bi bi-clock text-4xl mb-4 block"></i>
-          <p>尚無排程任務</p>
+          <p :class="store.isDarkMode ? 'text-gray-400' : 'text-gray-500'">尚無排程任務</p>
         </div>
 
         <div 
@@ -120,7 +120,7 @@ watch(() => store.currentView, (v) => { if (v === 'schedule') loadSchedules() })
                 ></div>
                 <span class="text-xl">{{ getJobIcon(job.sessionTarget) }}</span>
                 <div>
-                  <h4 class="font-semibold">{{ job.name }}</h4>
+                  <h4 class="font-semibold" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">{{ job.name }}</h4>
                   <p 
                     class="text-sm font-mono"
                     :class="store.isDarkMode ? 'text-gray-500' : 'text-gray-500'"

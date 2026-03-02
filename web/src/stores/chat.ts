@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, shallowRef } from 'vue'
 import type { Agent, Model, Message, Session, Toast, UploadedImage, ViewType, CronJob, Schedule, SystemStatus, ChannelInfo } from '@/types'
 
 const STORAGE_KEY = 'clawchat_sessions'
@@ -31,7 +31,8 @@ export const useChatStore = defineStore('chat', () => {
   // State
   const selectedAgent = ref<Agent>(agents.value[0]!)
   const selectedModel = ref(models.value[0]!.id)
-  const messages = ref<Message[]>([])
+  // Use shallowRef for better performance with large arrays
+  const messages = shallowRef<Message[]>([])
   const inputText = ref('')
   const isLoading = ref(false)
   const currentView = ref<ViewType>('chat')
@@ -111,12 +112,6 @@ export const useChatStore = defineStore('chat', () => {
     setTimeout(() => {
       toasts.value = toasts.value.filter(t => t.id !== id)
     }, 3000)
-  }
-
-  const toggleTheme = () => {
-    isDarkMode.value = !isDarkMode.value
-    localStorage.setItem('clawchat_theme', isDarkMode.value ? 'dark' : 'light')
-    document.documentElement.classList.toggle('light', !isDarkMode.value)
   }
 
   // File Browser
@@ -199,6 +194,15 @@ export const useChatStore = defineStore('chat', () => {
     if (saved) {
       isDarkMode.value = saved === 'dark'
     }
+    // Toggle both dark and light classes for Tailwind dark mode
+    document.documentElement.classList.toggle('dark', isDarkMode.value)
+    document.documentElement.classList.toggle('light', !isDarkMode.value)
+  }
+
+  const toggleTheme = () => {
+    isDarkMode.value = !isDarkMode.value
+    localStorage.setItem('clawchat_theme', isDarkMode.value ? 'dark' : 'light')
+    document.documentElement.classList.toggle('dark', isDarkMode.value)
     document.documentElement.classList.toggle('light', !isDarkMode.value)
   }
 
@@ -290,11 +294,14 @@ export const useChatStore = defineStore('chat', () => {
       const res = await fetch(`/api/session/${session.id}/messages`)
       const data = await res.json()
       if (data.messages?.length) {
-        messages.value = data.messages.map((m: any) => ({
-          role: m.role,
-          content: m.content,
-          timestamp: new Date(m.timestamp).getTime()
-        }))
+        // Filter out intermediate process messages (tool calls, thinking, etc.)
+        messages.value = data.messages
+          .filter((m: any) => !['tool_call', 'toolResult', 'thinking', 'progress'].includes(m.role))
+          .map((m: any) => ({
+            role: m.role,
+            content: m.content,
+            timestamp: new Date(m.timestamp).getTime()
+          }))
       } else {
         // Fallback to local - use session.id for storage lookup
         messages.value = getSessionMessages(session.id, session.agentId || selectedAgent.value.id)
@@ -304,6 +311,12 @@ export const useChatStore = defineStore('chat', () => {
     }
 
     saveSessions()
+    
+    // Trigger scroll to bottom after switching
+    setTimeout(() => {
+      // Dispatch custom event for ChatView to handle
+      window.dispatchEvent(new CustomEvent('chat-session-switched'))
+    }, 100)
   }
 
   // Image handling

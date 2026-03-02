@@ -4,12 +4,27 @@ import { marked } from 'marked'
 
 const store = useChatStore()
 
+// Cache for rendered markdown
+const renderCache = new Map<string, string>()
+
 const renderContent = (content: string | { type: string; text?: string }[]) => {
   const text = Array.isArray(content) 
     ? content.find((c: any) => c.type === 'text')?.text || ''
     : content
+  
+  // Check cache first
+  if (renderCache.has(text)) {
+    return renderCache.get(text)
+  }
+  
   try {
-    return marked.parse(text) as string
+    const rendered = marked.parse(text) as string
+    // Cache the result (limit cache size)
+    if (renderCache.size > 100) {
+      renderCache.clear()
+    }
+    renderCache.set(text, rendered)
+    return rendered
   } catch {
     return text
   }
@@ -52,12 +67,11 @@ const copyMessage = async (content: string | { type: string; text?: string }[]) 
       <div 
         class="max-w-[70%] rounded-lg"
         :class="msg.role === 'user' 
-          ? 'bg-blue-500 text-white' 
+          ? (store.isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white')
           : msg.role === 'toolResult'
             ? (store.isDarkMode ? 'bg-purple-900/50 text-purple-100' : 'bg-purple-50 text-purple-900')
-            : (store.isDarkMode ? 'bg-dark-secondary text-white' : 'bg-gray-100 text-gray-700')"
+            : (store.isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-800')"
       >
-        <!-- Header -->
         <div class="flex items-center justify-between gap-2 px-3 pt-2 pb-1">
           <span class="text-[10px] opacity-50">{{ store.formatTime(msg.timestamp) }}</span>
           <button 

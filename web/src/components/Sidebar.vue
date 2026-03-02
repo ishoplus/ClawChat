@@ -26,6 +26,15 @@ const renderMarkdown = (content: string) => {
     return content
   }
 }
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    store.showToast('已複製到剪貼簿')
+  } catch {
+    store.showToast('複製失敗', 'error')
+  }
+}
 </script>
 
 <template>
@@ -37,7 +46,7 @@ const renderMarkdown = (content: string) => {
     <div class="p-4 border-b flex items-center justify-between"
       :class="store.isDarkMode ? 'border-dark-border' : 'border-gray-200'"
     >
-      <h2 class="font-bold">對話</h2>
+      <h2 class="font-bold" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">對話</h2>
       <div class="flex gap-1">
         <button 
           @click="store.fetchSessions()"
@@ -65,7 +74,7 @@ const renderMarkdown = (content: string) => {
       <select 
         v-model="store.selectedFilterAgent"
         class="w-full rounded-lg px-3 py-2 text-sm border"
-        :class="store.isDarkMode ? 'bg-dark-hover border-dark-border' : 'bg-white border-gray-200'"
+        :class="store.isDarkMode ? 'bg-dark-hover border-dark-border text-white' : 'bg-white border-gray-200 text-gray-900'"
       >
         <option value="">所有 Agent</option>
         <option v-for="agent in store.agents" :key="agent.id" :value="agent.id">
@@ -82,17 +91,17 @@ const renderMarkdown = (content: string) => {
         @click="console.log('Sidebar click:', session.id, session.key, 'currentSession:', store.currentSession); store.switchSession(session)"
         class="w-full p-3 rounded-lg flex items-center gap-3 mb-1 transition-colors text-left"
         :class="(session.id === store.currentSession || session.key === store.currentSession) 
-          ? 'bg-blue-500 text-white' 
-          : (store.isDarkMode ? 'hover:bg-dark-hover bg-gray-800' : 'hover:bg-gray-100 bg-white')"
+          ? (store.isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-600 text-white') 
+          : (store.isDarkMode ? 'hover:bg-dark-hover bg-gray-800 text-white' : 'hover:bg-gray-100 bg-white text-gray-900')"
       >
         <div 
           class="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0"
-          :class="(session.id === store.currentSession || session.key === store.currentSession) ? 'bg-white/20' : (store.isDarkMode ? 'bg-dark-border' : 'bg-gray-200')"
+          :class="(session.id === store.currentSession || session.key === store.currentSession) ? (store.isDarkMode ? 'bg-white/20' : 'bg-white/30') : (store.isDarkMode ? 'bg-dark-border' : 'bg-gray-200')"
         >
           {{ getSourceIcon(session.source) }}
         </div>
         <div class="flex-1 min-w-0">
-          <div class="font-medium truncate">{{ session.name }}</div>
+          <div class="font-medium truncate" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">{{ session.name }}</div>
           <div class="text-xs truncate opacity-80 font-mono text-yellow-400">ID: {{ session.id?.slice(0, 12) }}</div>
           <div class="text-xs truncate opacity-80 font-mono text-blue-300">KEY: {{ session.key?.slice(0, 30) }}</div>
           <div class="text-xs truncate opacity-70">
@@ -116,7 +125,7 @@ const renderMarkdown = (content: string) => {
         class="w-full flex items-center justify-between text-xs uppercase tracking-wider mb-2 p-2 rounded-lg"
         :class="store.isDarkMode ? 'bg-dark-hover' : 'bg-gray-100'"
       >
-        <span><i class="bi bi-folder me-1"></i> Workspace</span>
+        <span :class="store.isDarkMode ? 'text-gray-300' : 'text-gray-700'"><i class="bi bi-folder me-1"></i> Workspace</span>
         <i class="bi" :class="store.showFileBrowser ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
       </button>
       
@@ -130,7 +139,7 @@ const renderMarkdown = (content: string) => {
             <i class="bi bi-house"></i> 根目錄
           </button>
           <template v-for="(p, idx) in store.fileBrowserPath" :key="idx">
-            <span class="text-gray-600">/</span>
+            <span class="text-gray-500">/</span>
             <button 
               @click="store.fileBrowserNavigate(store.fileBrowserPath.slice(0, idx + 1).join('/'))"
               class="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap"
@@ -155,7 +164,7 @@ const renderMarkdown = (content: string) => {
           :key="file.path"
           @click="store.openFile(file)"
           class="w-full p-2 text-left flex items-center gap-2 rounded text-sm transition-colors truncate"
-          :class="store.isDarkMode ? 'hover:bg-dark-hover' : 'hover:bg-gray-100'"
+          :class="store.isDarkMode ? 'hover:bg-dark-hover text-gray-300' : 'hover:bg-gray-100 text-gray-700'"
         >
           <i class="bi" :class="file.type === 'directory' ? 'bi-folder' : 'bi-file-text'"></i>
           <span class="truncate">{{ file.name }}</span>
@@ -168,21 +177,32 @@ const renderMarkdown = (content: string) => {
 
     <!-- File Preview Modal -->
     <div v-if="store.filePreviewContent !== null" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" @click.self="store.closeFilePreview()">
-      <div class="bg-gray-900 rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col border border-gray-700">
-        <div class="flex items-center justify-between p-3 border-b border-gray-700">
+      <div 
+        class="rounded-lg max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col border"
+        :class="store.isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'"
+      >
+        <div 
+          class="flex items-center justify-between p-3 border-b"
+          :class="store.isDarkMode ? 'border-gray-700' : 'border-gray-200'"
+        >
           <div class="flex items-center gap-2">
             <i class="bi bi-file-text"></i>
             <span class="font-medium truncate">{{ store.filePreviewPath }}</span>
           </div>
           <div class="flex items-center gap-2">
             <button 
-              @click="navigator.clipboard.writeText(store.filePreviewContent || '')"
-              class="text-gray-400 hover:text-white p-1"
+              @click="copyToClipboard(store.filePreviewContent || '')"
+              class="p-1"
+              :class="store.isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'"
               title="複製內容"
             >
               <i class="bi bi-clipboard"></i>
             </button>
-            <button @click="store.closeFilePreview()" class="text-gray-400 hover:text-white">
+            <button 
+              @click="store.closeFilePreview()" 
+              class="p-1"
+              :class="store.isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'"
+            >
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
@@ -193,9 +213,15 @@ const renderMarkdown = (content: string) => {
             <img :src="store.filePreviewImage" class="max-w-full max-h-[70vh] object-contain rounded-lg" />
           </div>
           <!-- Markdown 預覽 -->
-          <div v-else-if="store.isMarkdownFile(store.filePreviewPath)" class="markdown-body text-sm text-gray-300" v-html="renderMarkdown(store.filePreviewContent || '')"></div>
+          <div v-else-if="store.isMarkdownFile(store.filePreviewPath)" 
+            class="markdown-body text-sm p-4 rounded-lg"
+            :class="store.isDarkMode ? 'text-gray-300 bg-gray-800' : 'text-gray-800 bg-gray-50'"
+            v-html="renderMarkdown(store.filePreviewContent || '')"></div>
           <!-- 純文字預覽 -->
-          <pre v-else class="text-xs text-gray-300 whitespace-pre-wrap">{{ store.filePreviewContent }}</pre>
+          <pre v-else
+            class="text-xs whitespace-pre-wrap overflow-auto"
+            :class="store.isDarkMode ? 'text-gray-300' : 'text-gray-700'"
+          >{{ store.filePreviewContent }}</pre>
         </div>
       </div>
     </div>
@@ -206,9 +232,17 @@ const renderMarkdown = (content: string) => {
       :class="store.isDarkMode ? 'border-dark-border' : 'border-gray-200'"
     >
       <button 
+        @click="store.currentView = 'chat'"
+        class="p-2 rounded-lg transition-colors"
+        :class="store.currentView === 'chat' ? (store.isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white') : (store.isDarkMode ? 'text-gray-400' : 'text-gray-500')"
+        title="對話"
+      >
+        <i class="bi bi-chat-dots"></i>
+      </button>
+      <button 
         @click="store.currentView = 'board'"
         class="p-2 rounded-lg transition-colors"
-        :class="store.currentView === 'board' ? 'bg-blue-500 text-white' : 'text-gray-400'"
+        :class="store.currentView === 'board' ? (store.isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white') : (store.isDarkMode ? 'text-gray-400' : 'text-gray-500')"
         title="留言板"
       >
         <i class="bi bi-chat-square-text"></i>
@@ -216,7 +250,7 @@ const renderMarkdown = (content: string) => {
       <button 
         @click="store.currentView = 'schedule'"
         class="p-2 rounded-lg transition-colors"
-        :class="store.currentView === 'schedule' ? 'bg-blue-500 text-white' : 'text-gray-400'"
+        :class="store.currentView === 'schedule' ? (store.isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white') : (store.isDarkMode ? 'text-gray-400' : 'text-gray-500')"
         title="排程"
       >
         <i class="bi bi-clock"></i>
@@ -224,7 +258,7 @@ const renderMarkdown = (content: string) => {
       <button 
         @click="store.currentView = 'manage'"
         class="p-2 rounded-lg transition-colors"
-        :class="store.currentView === 'manage' ? 'bg-blue-500 text-white' : 'text-gray-400'"
+        :class="store.currentView === 'manage' ? (store.isDarkMode ? 'bg-blue-500 text-white' : 'bg-blue-500 text-white') : (store.isDarkMode ? 'text-gray-400' : 'text-gray-500')"
         title="管理"
       >
         <i class="bi bi-gear"></i>

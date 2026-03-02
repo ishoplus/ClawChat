@@ -37,7 +37,8 @@ const isChatTab = () => {
 <template>
   <div 
     class="lg:hidden fixed bottom-0 left-0 right-0 z-[100] flex flex-col"
-    :class="store.isDarkMode ? 'bg-dark-bg border-dark-border' : 'bg-white border-gray-200'"
+    :class="store.isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'"
+    style="padding-bottom: env(safe-area-inset-bottom, 0px);"
   >
     <!-- Session List (when on chat tab) -->
     <div v-if="isChatTab()" class="flex-1 overflow-y-auto" style="max-height: 60vh;">
@@ -45,34 +46,31 @@ const isChatTab = () => {
         v-for="session in store.displayedSessions" 
         :key="session.id"
         @click="selectSession(session)"
-        class="w-full p-4 flex items-center gap-3 text-left border-b"
-        :class="store.isDarkMode ? 'border-dark-border hover:bg-dark-hover' : 'border-gray-100 hover:bg-gray-50'"
+        class="w-full p-4 flex items-center gap-3 text-left border-b dark:border-gray-700 dark:hover:bg-gray-800 hover:bg-gray-50"
       >
         <div 
-          class="w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0"
-          :class="store.isDarkMode ? 'bg-dark-secondary' : 'bg-gray-100'"
+          class="w-12 h-12 rounded-full flex items-center justify-center text-xl flex-shrink-0 dark:bg-gray-800 bg-gray-100"
         >
           {{ getSourceIcon(session.source) }}
         </div>
         <div class="flex-1 min-w-0">
-          <div class="font-medium truncate">{{ session.name }}</div>
-          <div class="text-xs opacity-60 truncate">{{ session.preview || '尚無訊息' }}</div>
+          <div class="font-medium truncate dark:text-white text-gray-900">{{ session.name }}</div>
+          <div class="text-xs dark:text-gray-400 text-gray-500 truncate">{{ session.preview || '尚無訊息' }}</div>
         </div>
-        <div class="text-xs opacity-40">{{ session.age }}</div>
+        <div class="text-xs dark:text-gray-500 text-gray-400">{{ session.age }}</div>
       </button>
     </div>
 
     <!-- Bottom Nav -->
     <nav 
-      class="border-t flex"
-      :class="store.isDarkMode ? 'border-dark-border' : 'border-gray-200'"
+      class="border-t flex dark:border-gray-700"
     >
       <button 
         v-for="tab in tabs"
         :key="tab.key"
         @click="onTabClick(tab.key)"
         class="flex-1 py-3 flex flex-col items-center gap-0.5"
-        :class="(tab.key === 'chatList' ? isChatTab() : store.currentView === tab.key) ? 'text-blue-500' : 'text-gray-500'"
+        :class="(tab.key === 'chatList' ? isChatTab() : store.currentView === tab.key) ? 'text-blue-500' : 'dark:text-gray-400 text-gray-500'"
       >
         <i class="bi text-xl" :class="tab.icon"></i>
         <span class="text-[10px]">{{ tab.label }}</span>

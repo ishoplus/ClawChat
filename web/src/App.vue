@@ -24,8 +24,7 @@ onMounted(async () => {
 
 <template>
   <div 
-    class="flex h-screen"
-    :class="store.isDarkMode ? 'bg-dark-bg text-white' : 'bg-white text-gray-900'"
+    class="flex h-screen dark:bg-gray-900 dark:text-white bg-white text-gray-900"
   >
     <!-- Desktop Sidebar -->
     <Sidebar class="hidden md:flex" />

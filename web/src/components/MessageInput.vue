@@ -22,11 +22,14 @@ const onFileChange = (e: Event) => {
 </script>
 
 <template>
-  <div class="p-4 pb-20 lg:pb-4">
+  <div 
+    class="p-4 pb-20 lg:pb-4"
+    :class="store.isDarkMode ? 'bg-gray-900 border-t border-gray-800' : 'bg-white border-t border-gray-200'"
+  >
     <!-- Image Previews -->
     <div v-if="store.uploadedImages.length > 0" class="mb-2 flex gap-2 flex-wrap">
       <div v-for="(img, idx) in store.uploadedImages" :key="idx" class="relative">
-        <img :src="img.preview" class="w-16 h-16 object-cover rounded-lg border">
+        <img :src="img.preview" class="w-16 h-16 object-cover rounded-lg" :class="store.isDarkMode ? 'border-gray-700' : 'border-gray-200'">
         <button 
           @click="store.removeImage(idx)"
           class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
@@ -67,8 +70,8 @@ const onFileChange = (e: Event) => {
         placeholder="輸入訊息..."
         class="flex-1 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
         :class="store.isDarkMode 
-          ? 'bg-dark-secondary border border-dark-border' 
-          : 'bg-gray-100 border border-gray-200'"
+          ? 'bg-dark-secondary border border-dark-border text-white placeholder-gray-500' 
+          : 'bg-gray-100 border border-gray-200 text-gray-900 placeholder-gray-400'"
       >
 
       <!-- Send Button -->
@@ -76,6 +79,7 @@ const onFileChange = (e: Event) => {
         type="submit"
         :disabled="store.isLoading || (!store.inputText.trim() && store.uploadedImages.length === 0)"
         class="bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg px-4 py-2 transition-colors"
+        :class="store.isDarkMode ? '' : 'brightness-90'"
       >
         <i class="bi bi-send"></i>
       </button>

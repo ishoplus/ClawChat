@@ -58,7 +58,7 @@ watch(() => store.currentView, (v) => { if (v === 'manage') fetchManageData() })
               class="w-3 h-3 rounded-full"
               :class="store.systemStatus.status === 'online' ? 'bg-green-500' : 'bg-red-500'"
             ></div>
-            <span class="font-medium">Gateway {{ store.systemStatus.status }}</span>
+            <span class="font-medium" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">Gateway {{ store.systemStatus.status }}</span>
           </div>
           
           <div v-if="store.systemStatus.ngrokUrl">
@@ -98,7 +98,7 @@ watch(() => store.currentView, (v) => { if (v === 'manage') fetchManageData() })
           >
             <span class="text-2xl">{{ agent.identity?.emoji || '🤖' }}</span>
             <div class="flex-1 min-w-0">
-              <div class="font-medium truncate">{{ agent.name || agent.id }}</div>
+              <div class="font-medium truncate" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">{{ agent.name || agent.id }}</div>
               <div 
                 class="text-xs truncate"
                 :class="store.isDarkMode ? 'text-gray-500' : 'text-gray-400'"
@@ -134,7 +134,7 @@ watch(() => store.currentView, (v) => { if (v === 'manage') fetchManageData() })
               📱
             </div>
             <div class="flex-1">
-              <div class="font-medium capitalize">{{ name }}</div>
+              <div class="font-medium capitalize" :class="store.isDarkMode ? 'text-white' : 'text-gray-900'">{{ name }}</div>
               <div 
                 class="text-xs"
                 :class="store.isDarkMode ? 'text-gray-500' : 'text-gray-400'"
