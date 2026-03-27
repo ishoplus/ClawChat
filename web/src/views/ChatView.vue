@@ -3,7 +3,6 @@ import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import MessageList from '@/components/MessageList.vue'
 import MessageInput from '@/components/MessageInput.vue'
-import ModelSelector from '@/components/ModelSelector.vue'
 
 const store = useChatStore()
 const messagesContainer = ref<HTMLElement | null>(null)
@@ -70,8 +69,6 @@ const exitChat = () => {
         <span v-if="store.currentSession" class="text-xs opacity-60 font-mono ml-1 text-blue-400">{{ store.sessions.find(s => s.id === store.currentSession || s.key === store.currentSession)?.key }}</span>
       </div>
 
-      <!-- Right: Model selector -->
-      <ModelSelector />
     </div>
 
     <!-- Messages -->

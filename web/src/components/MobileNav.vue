@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useChatStore } from '@/stores/chat'
+import type { ViewType } from '@/types/index'
 
 const store = useChatStore()
 
@@ -8,6 +9,7 @@ const tabs = [
   { key: 'board', icon: 'bi-chat-square-text', label: '留言' },
   { key: 'schedule', icon: 'bi-clock', label: '排程' },
   { key: 'manage', icon: 'bi-gear', label: '管理' },
+  { key: 'config', icon: 'bi-sliders', label: '配置' },
 ] as const
 
 const selectSession = (session: any) => {
@@ -16,7 +18,7 @@ const selectSession = (session: any) => {
 
 const onTabClick = (key: string) => {
   store.isChatMode = false
-  store.currentView = key === 'chatList' ? 'chatList' : key
+  store.currentView = (key === 'chatList' ? 'chatList' : key) as ViewType
 }
 
 const getSourceIcon = (source?: string) => {
@@ -27,6 +29,18 @@ const getSourceIcon = (source?: string) => {
     cron: '⏰'
   }
   return icons[source || ''] || '💬'
+}
+
+const getSessionAge = (updatedAt?: number) => {
+  if (!updatedAt) return ""
+  const diff = Date.now() - updatedAt
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 1) return "剛剛"
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  return `${days}d`
 }
 
 const isChatTab = () => {
@@ -57,7 +71,7 @@ const isChatTab = () => {
           <div class="font-medium truncate dark:text-white text-gray-900">{{ session.name }}</div>
           <div class="text-xs dark:text-gray-400 text-gray-500 truncate">{{ session.preview || '尚無訊息' }}</div>
         </div>
-        <div class="text-xs dark:text-gray-500 text-gray-400">{{ session.age }}</div>
+        <div class="text-xs dark:text-gray-500 text-gray-400">{{ getSessionAge(session.updatedAt) }}</div>
       </button>
     </div>
 

@@ -33,6 +33,7 @@ export interface Session {
   source?: string
   isGateway?: boolean
   updatedAt?: number
+  key?: string
 }
 
 export interface Toast {
@@ -92,4 +93,4 @@ export interface SystemStatus {
   ngrokUrl?: string
 }
 
-export type ViewType = 'chat' | 'board' | 'schedule' | 'manage' | 'backlog'
+export type ViewType = 'chat' | 'chatList' | 'board' | 'schedule' | 'manage' | 'config' | 'backlog'

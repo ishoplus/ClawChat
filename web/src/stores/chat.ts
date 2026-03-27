@@ -179,8 +179,8 @@ export const useChatStore = defineStore('chat', () => {
       
       filePreviewImage.value = null
       filePreviewContent.value = data.content || data.error || '無法預覽'
-    } catch (e) {
-      showToast('無法讀取檔案', 'error')
+    } catch {
+      showToast('無法讀覽檔案', 'error')
     }
   }
   
@@ -241,10 +241,10 @@ export const useChatStore = defineStore('chat', () => {
     try {
       const key = `clawchat_${agentId}_${sessionId}`
       localStorage.setItem(key, JSON.stringify(msgs))
-    } catch {}
+    } catch { /* ignore */ }
   }
 
-  const createNewSession = (agent?: Agent) => {
+  const createNewSession = async (agent?: Agent) => {
     if (agent) selectedAgent.value = agent
     const newId = `session_${Date.now()}`
     sessions.value.unshift({ 
@@ -258,6 +258,23 @@ export const useChatStore = defineStore('chat', () => {
     messages.value = []
     saveSessions()
     showNewChatModal.value = false
+
+    // 自動發送歡迎語
+    const greeting = '你好'
+    inputText.value = greeting
+    await sendMessage()
+    
+    // 刷新 session 列表以獲取真實 session
+    await fetchSessions()
+    
+    // 切換到最新的 session (Gateway 創建的)
+    if (sessions.value.length > 0) {
+      const latestSession = sessions.value[0]
+      if (latestSession && latestSession.key !== currentSession.value) {
+        currentSession.value = latestSession.key || latestSession.id
+        messages.value = getSessionMessages(latestSession.key || latestSession.id, selectedAgent.value.id)
+      }
+    }
   }
 
   const switchSession = async (session: Session) => {
@@ -276,9 +293,15 @@ export const useChatStore = defineStore('chat', () => {
     }
 
     // Switch agent if needed
+    const previousAgentId = selectedAgent.value.id
     if (session.agentId) {
       const agent = agents.value.find(a => a.id === session.agentId)
       if (agent) selectedAgent.value = agent
+    }
+    
+    // 如果 agent 變更了，重置 Workspace 到根目錄
+    if (session.agentId && session.agentId !== previousAgentId) {
+      await fileBrowserNavigate('')
     }
 
     // Use key for display tracking
@@ -296,9 +319,9 @@ export const useChatStore = defineStore('chat', () => {
       if (data.messages?.length) {
         // Filter out intermediate process messages (tool calls, thinking, etc.)
         messages.value = data.messages
-          .filter((m: any) => !['tool_call', 'toolResult', 'thinking', 'progress'].includes(m.role))
-          .map((m: any) => ({
-            role: m.role,
+          .filter((m: { role: string }) => !['tool_call', 'toolResult', 'thinking', 'progress'].includes(m.role))
+          .map((m: { role: string; content: string; timestamp: string }) => ({
+            role: m.role as Message['role'],
             content: m.content,
             timestamp: new Date(m.timestamp).getTime()
           }))
@@ -347,7 +370,7 @@ export const useChatStore = defineStore('chat', () => {
       const data = await res.json()
       
       // 直接使用 API 返回的數據
-      const gatewaySessions: Session[] = (data.sessions || []).map((gs: any) => ({
+      const gatewaySessions: Session[] = (data.sessions || []).map((gs: { id: string; key?: string; name?: string; label?: string; agentId: string; source?: string; updatedAt?: number }) => ({
         id: gs.id,
         key: gs.key || gs.id,
         name: gs.name || gs.label || '新對話',
@@ -383,9 +406,10 @@ export const useChatStore = defineStore('chat', () => {
     if ((!text && uploadedImages.value.length === 0) || isLoading.value) return
 
     // Build message content
-    let messageContent: any = text
+    let messageContent: Message['content'] = text
     if (uploadedImages.value.length > 0) {
-      const parts: any[] = text ? [{ type: 'text', text }] : []
+      type ContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } }
+      const parts: ContentPart[] = text ? [{ type: 'text', text }] : []
       for (const img of uploadedImages.value) {
         parts.push({ type: 'image_url', image_url: { url: img.dataUrl } })
       }
@@ -472,15 +496,16 @@ export const useChatStore = defineStore('chat', () => {
                 }
               }
               messages.value = [...messages.value]
-            } catch {}
+            } catch { /* ignore */ }
           }
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '發生未知錯誤'
       messages.value.push({ 
         role: 'assistant', 
-        content: '抱歉，發生錯誤：' + error.message,
-        error: error.message,
+        content: '抱歉，發生錯誤：' + errorMessage,
+        error: errorMessage,
         timestamp: Date.now()
       })
     } finally {

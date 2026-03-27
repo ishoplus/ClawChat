@@ -2,10 +2,12 @@
 import { onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import Sidebar from '@/components/Sidebar.vue'
+import WorkspacePanel from '@/components/WorkspacePanel.vue'
 import ChatView from '@/views/ChatView.vue'
 import BoardView from '@/views/BoardView.vue'
 import ScheduleView from '@/views/ScheduleView.vue'
 import ManageView from '@/views/ManageView.vue'
+import ConfigView from '@/views/ConfigView.vue'
 import Toast from '@/components/Toast.vue'
 import MobileNav from '@/components/MobileNav.vue'
 import NewChatModal from '@/components/modals/NewChatModal.vue'
@@ -26,15 +28,19 @@ onMounted(async () => {
   <div 
     class="flex h-screen dark:bg-gray-900 dark:text-white bg-white text-gray-900"
   >
-    <!-- Desktop Sidebar -->
+    <!-- Desktop Sidebar (Session List) -->
     <Sidebar class="hidden md:flex" />
 
-    <!-- Main Content -->
+    <!-- Workspace Panel -->
+    <WorkspacePanel class="hidden md:flex" />
+
+    <!-- Main Content (Chat) -->
     <main class="flex-1 flex flex-col overflow-hidden">
       <ChatView v-if="store.currentView === 'chat'" />
       <BoardView v-else-if="store.currentView === 'board'" />
       <ScheduleView v-else-if="store.currentView === 'schedule'" />
       <ManageView v-else-if="store.currentView === 'manage'" />
+      <ConfigView v-else-if="store.currentView === 'config'" />
     </main>
 
     <!-- Mobile Nav (hidden when in chat mode) -->
