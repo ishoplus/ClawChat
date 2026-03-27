@@ -5,14 +5,14 @@
 | 組件 | 目錄 | Port | 命令 |
 |------|------|------|------|
 | 前端 (Vite) | `ClawChat/web` | 5173 | `npm run dev` |
-| 後端 (Python) | `ClawChat/web-old` | 8093 | `python3 server.py` |
+| 後端 (Python) | `ClawChat/server` | 8093 | `python3 server.py` |
 
 ## 啟動步驟
 
 ### 1. 啟動後端
 
 ```bash
-cd /Users/showang/.openclaw/workspaces/code/ClawChat/web-old
+cd /Users/showang/.openclaw/workspaces/code/ClawChat/server
 python3 server.py
 ```
 
