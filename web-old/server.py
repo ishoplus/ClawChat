@@ -82,6 +82,9 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self._request_origin = ''
     
     def end_headers(self):
+        # 確保 _request_origin 已初始化
+        if not hasattr(self, '_request_origin'):
+            self._request_origin = ''
         # 動態設定 CORS Origin
         if not self._request_origin:
             self._request_origin = self.headers.get('Origin', '')
@@ -116,8 +119,16 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(self.get_channels())
         elif self.path == '/api/config':
             self.send_json_response(self.get_config())
-        elif self.path == '/api/sessions':
+        elif self.path.startswith('/api/sessions'):
             self.send_json_response(self.get_sessions())
+        elif self.path.startswith('/api/session/'):
+            # /api/session/<session_id>/messages
+            parts = self.path.split('/')
+            if len(parts) >= 5 and parts[4] == 'messages':
+                session_id = parts[3]
+                self.send_json_response(self.get_session_messages(session_id))
+            else:
+                self.send_json_response({"error": "Invalid path"})
         elif self.path.startswith('/api/agent/'):
             parts = self.path.split('/')
             # parts: ['', 'api', 'agent', '<agent_id>', 'files', ...]
@@ -453,33 +464,83 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     
     def get_sessions(self):
         """取得 OpenClaw Sessions"""
+        # 從 URL 參數獲取 agentId
+        import urllib.parse
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        agent_filter = query.get('agentId', [None])[0]
+        
+        # 使用 agent_filter 作為快取 key 的一部分
+        cache_key = f'sessions_{agent_filter or "all"}'
+        
         def fetch():
             try:
                 import subprocess
+                # 獲取所有 agents 的 session
                 result = subprocess.run(
-                    ['openclaw', 'sessions', '--json'],
+                    ['openclaw', 'sessions', '--all-agents', '--json'],
                     capture_output=True,
                     text=True,
                     timeout=10
                 )
                 if result.returncode == 0:
                     data = json.loads(result.stdout)
-                    # 簡化 sessions 數據
                     sessions = []
                     for s in data.get('sessions', []):
-                        # 解析 key 取得來源
                         key = s.get('key', '')
+                        agent_id = s.get('agentId', '')
+                        
+                        # 跳過已重置的 session
+                        if '.reset.' in key or ':run:' in key:
+                            continue
+                        
+                        # 如果有篩選條件，跳過不符的
+                        if agent_filter and agent_id != agent_filter:
+                            continue
+                        
+                        # 解析 key 取得來源和名稱
                         source = 'unknown'
-                        if 'telegram' in key:
-                            source = 'telegram'
-                        elif 'discord' in key:
-                            source = 'discord'
-                        elif 'webchat' in key:
-                            source = 'webchat'
-                        elif 'cron' in key:
-                            source = 'cron'
-                        elif 'main_session' in key:
-                            source = 'main'
+                        name = ''
+                        
+                        # 解析 key 格式: agent:agentId:source:...
+                        parts = key.split(':')
+                        if len(parts) >= 3:
+                            source = parts[2] if parts[2] else parts[1]
+                            
+                            # 嘗試從 key 提取會話名稱
+                            if '_session_' in key:
+                                # e.g., agent:main:openai-user:main_session_xxx or code_session_xxx
+                                # 提取 session ID 部分
+                                session_part = key.split('_session_')[-1] if '_session_' in key else ''
+                                if session_part.isdigit():
+                                    # 是時間戳格式，轉換為可讀時間
+                                    import time
+                                    try:
+                                        ts = int(session_part) / 1000
+                                        time_str = time.strftime('%m/%d %H:%M', time.localtime(ts))
+                                        name = f'新對話 {time_str}'
+                                    except:
+                                        name = '新對話'
+                                else:
+                                    name = '新對話'
+                            elif 'webchat' in key:
+                                name = f"Webchat"
+                            elif 'telegram' in key:
+                                name = f"Telegram"
+                            elif 'discord' in key:
+                                name = f"Discord"
+                            elif 'cron' in key:
+                                name = f"排程任務"
+                            elif 'main' in key and len(parts) <= 3:
+                                name = f"Main"
+                            elif len(parts) > 3:
+                                name = parts[3] if parts[3] else parts[-1][:16]
+                            else:
+                                name = key.split(':')[-1][:16]
+                        
+                        # 優先使用 displayName
+                        display_name = s.get('displayName')
+                        if display_name:
+                            name = display_name
                         
                         # 格式化時間
                         age_ms = s.get('ageMs', 0)
@@ -495,7 +556,8 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                         sessions.append({
                             "id": s.get('sessionId', ''),
                             "key": key,
-                            "agentId": s.get('agentId', ''),
+                            "agentId": agent_id,
+                            "name": name or '新對話',
                             "source": source,
                             "age": age,
                             "ageMs": age_ms,
@@ -503,13 +565,116 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                             "tokens": s.get('totalTokens', 0),
                             "contextPercent": round(((s.get('totalTokens') or 0) / (s.get('contextTokens') or 200000)) * 100, 1),
                             "updatedAt": s.get('updatedAt', 0),
+                            "label": s.get('label', ''),
                         })
+                    
+                    # 按更新时间排序
+                    sessions.sort(key=lambda x: x.get('updatedAt', 0), reverse=True)
                     return {"sessions": sessions, "count": len(sessions)}
                 else:
                     return {"sessions": [], "error": result.stderr}
             except Exception as e:
                 return {"sessions": [], "error": str(e)}
-        return get_cached('sessions', fetch, ttl=30)
+        return get_cached(cache_key, fetch, ttl=10)
+    
+    def get_session_messages(self, session_id):
+        """取得 Session 的訊息歷史"""
+        import os
+        
+        # 直接從本地文件系統查找 session 文件
+        agent_id = None
+        for agent_check in ['code', 'main', 'rich', 'chef', 'travel', 'startup', 'skill-manager', 'ip', 'nexchip']:
+            session_dir = os.path.expanduser(f"~/.openclaw/agents/{agent_check}/sessions")
+            target_file = os.path.join(session_dir, f"{session_id}.jsonl")
+            if os.path.exists(target_file):
+                agent_id = agent_check
+                break
+        
+        if not agent_id:
+            return {"error": "Session not found", "messages": [], "session_id": session_id}
+        
+        agent = agent_id
+        
+        # 查找對應的 session 文件
+        session_dir = os.path.expanduser(f"~/.openclaw/agents/{agent}/sessions")
+        
+        # 嘗試找到對應的 jsonl 文件
+        messages = []
+        try:
+            files = os.listdir(session_dir)
+            # 直接用 session_id 匹配
+            target_file = f"{session_id}.jsonl"
+            if target_file in files:
+                filepath = os.path.join(session_dir, target_file)
+                # 讀取 JSONL 文件
+                with open(filepath, 'r') as fp:
+                    for line in fp:
+                        try:
+                            entry = json.loads(line)
+                            if entry.get('type') == 'message':
+                                msg = entry.get('message', {})
+                                role = msg.get('role', '')
+                                content = msg.get('content', [])
+                                
+                                # 檢查是否純思考內容（只有 thinking 沒有 text）
+                                is_thinking_only = False
+                                text_content = ''
+                                thinking_content = ''
+                                tool_calls = []
+                                if isinstance(content, list):
+                                    has_text = False
+                                    for c in content:
+                                        if isinstance(c, dict):
+                                            if c.get('type') == 'text' and c.get('text'):
+                                                has_text = True
+                                            elif c.get('type') == 'thinking':
+                                                thinking_content += c.get('thinking', '') + '\n\n'
+                                            elif c.get('type') == 'toolCall':
+                                                tool_calls.append(c.get('name', 'unknown'))
+                                    is_thinking_only = not has_text and bool(thinking_content)
+                                    
+                                    for c in content:
+                                        if isinstance(c, dict):
+                                            if c.get('type') == 'text':
+                                                text_content += c.get('text', '')
+                                elif isinstance(content, str):
+                                    text_content = content[:500]
+                                
+                                # 跳過純思考的訊息（會合併到主要訊息中）
+                                if is_thinking_only:
+                                    continue
+                                
+                                # 清理 HTML 標籤
+                                import re
+                                text_content = re.sub(r'<[^>]+>', '', text_content)
+                                text_content = text_content.strip()
+                                thinking_content = re.sub(r'<[^>]+>', '', thinking_content).strip()
+                                
+                                # 組合內容（歷史訊息不顯示思考過程）
+                                full_content = text_content
+                                if tool_calls:
+                                    full_content += f"\n\n🔧 使用工具：{', '.join(tool_calls)}"
+                                
+                                # 跳過空的或只有思考標題的內容
+                                if not full_content or full_content.startswith('🤔 思考過程：\n\n📝 回答：\n'):
+                                    continue
+                                
+                                # 跳過重複的思考訊息（以思考開頭的獨立訊息）
+                                if full_content.startswith('🤔 思考過程：') and '📝 回答：\n\n' not in full_content:
+                                    continue
+                                
+                                if full_content:
+                                    messages.append({
+                                        "role": role,
+                                        "content": full_content[:2000],
+                                        "timestamp": entry.get('timestamp', '')
+                                    })
+                        except:
+                            continue
+        except Exception as e:
+            return {"error": str(e), "messages": []}
+        
+        return {"messages": messages, "agentId": agent_id}
     
     def get_channels(self):
         """取得 Channels 狀態"""
@@ -745,6 +910,70 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         # 每次請求更新 Origin
         self._request_origin = self.headers.get('Origin', '')
+        
+        # Debug: 打印路徑
+        print(f"DEBUG POST path: {self.path}")
+        
+        # 支援 /v1/responses API (OpenClaw Web UI 使用的端點)
+        if self.path.startswith('/v1/responses'):
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length)
+            
+            # 檢查是否需要流式輸出
+            try:
+                body_json = json.loads(body)
+                stream = body_json.get('stream', False)
+            except:
+                stream = False
+            
+            req = urllib.request.Request(
+                f"{GATEWAY_URL}{self.path}",
+                data=body,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {GATEWAY_TOKEN}',
+                    'Origin': '*'
+                },
+                method='POST'
+            )
+            
+            try:
+                if stream:
+                    # SSE 流式轉發
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/event-stream')
+                    self.send_header('Cache-Control', 'no-cache')
+                    self.send_header('Connection', 'close')
+                    self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+                    self.end_headers()
+                    
+                    gateway_resp = urllib.request.urlopen(req, timeout=120)
+                    while True:
+                        chunk = gateway_resp.read(16384)
+                        if not chunk:
+                            break
+                        self.wfile.write(chunk)
+                        self.wfile.flush()
+                    gateway_resp.close()
+                else:
+                    with urllib.request.urlopen(req, timeout=120) as response:
+                        result = response.read()
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(result)
+            except urllib.error.HTTPError as e:
+                error_body = e.read()
+                self.send_response(e.code)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(error_body)
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': str(e)}).encode())
+            return
         
         if self.path == '/api/chat':
             # Proxy to Gateway with SSE support
